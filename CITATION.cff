@@ -1,23 +1,43 @@
 cff-version: 1.2.0
-message: "If you use NSphere, please cite the paper (Kamionkowski & Sigurdson, 2025, arXiv:2504.13996). See README for BibTeX."
+message: "If you use NSphere, please cite Kamionkowski & Sigurdson (2025), arXiv:2504.13996. See README for BibTeX."
 title: "NSphere: Spherical N-body Simulation Code"
 authors: # Software authors
   - family-names: Sigurdson
     given-names: Kris
   - family-names: Kamionkowski
     given-names: Marc
-version: "0.1.2"
+version: "0.1.7"
 license: "Apache-2.0"
 repository: "https://github.com/kris-sigurdson/NSphere"
-date-released: 2025-04-24 # Adjust date
+date-released: 2025-10-28
 preferred-citation:
   type: article
   title: "Evolution of self-gravitating spherical dark-matter halos with and without new physics"
-  authors: # Paper author order
+  authors:
   - family-names: Kamionkowski
     given-names: Marc
   - family-names: Sigurdson
     given-names: Kris
   year: 2025
-  # TODO: Add DOI when published
   url: "https://arxiv.org/abs/2504.13996"
+references:
+  - type: article
+    title: "Numerical evolution of self-gravitating halos of self-interacting dark matter"
+    authors:
+    - family-names: Kamionkowski
+      given-names: Marc
+    - family-names: Sigurdson
+      given-names: Kris
+    - family-names: Slone
+      given-names: Oren
+    year: 2025
+    url: "https://arxiv.org/abs/2506.04334"
+  - type: article
+    title: "Gravothermal collapse of self-interacting dark-matter halos with anisotropic velocity distributions"
+    authors:
+    - family-names: Kamionkowski
+      given-names: Marc
+    - family-names: Sigurdson
+      given-names: Kris
+    year: 2025
+    url: "https://arxiv.org/abs/2510.23705"

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Results from Anisotropic SIDM Simulations - NSphere</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #24292e;
+        }
+        h1 {
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 0.3em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        td {
+            padding: 10px;
+            vertical-align: top;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        .center {
+            text-align: center;
+        }
+        .justify {
+            text-align: justify;
+        }
+        sub sup {
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Key Results from Anisotropic SIDM Simulations</h1>
+
+<div class="center">
+    <img src="img/nsphere_anisotropy_paper_abstract.png" alt="Anisotropy Paper Abstract" style="width:80%;">
+</div>
+
+<p class="center"><sub>Explore these results online in our <a href="https://kris-sigurdson.github.io/NSphere/examples/notebooks/nsphere_notebook_example3.html">Example 3 Notebook</a> which reproduces all 7 paper figures.</sub></p>
+
+<table>
+<tr>
+<td width="100%"><img src="img/aniso_fig1_phase_space.png" alt="Initial Phase Space for Different β" style="width:100%;"></td>
+</tr>
+<tr>
+<td class="justify"><sub><sup><b>Initial Phase-Space Density for Different β Values:</b> Three-panel comparison showing initial distributions in (r, v_r) space for constant-β anisotropy models. Radial velocity spread increases systematically from β=-1/2 (tangential orbits, left) through β=0 (isotropic, center) to β=1/2 (radial orbits, right), demonstrating how anisotropy parameter controls orbital structure while preserving the same Hernquist density profile.</sup></sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="33%"><img src="img/aniso_fig2a_particle_count.png" alt="Particle Count Evolution" style="width:100%;"></td>
+<td width="33%"><img src="img/aniso_fig2b_dispersion.png" alt="Velocity Dispersion Evolution" style="width:100%;"></td>
+<td width="33%"><img src="img/aniso_fig2c_beta_evolution.png" alt="β Anisotropy Evolution" style="width:100%;"></td>
+</tr>
+<tr>
+<td class="justify"><sub><sup><b>Particle Count at r<0.02 kpc:</b> Time evolution showing collapse onset for 5 constant-β models. Particle accumulation varies by factor of ~2 across anisotropy range, with tangential models (β=-1/2, purple) collapsing faster than radial models (β=1/2, red). All models show characteristic accumulation followed by post-collapse decrease.</sup></sub></td>
+<td class="justify"><sub><sup><b>Central Velocity Dispersion:</b> Evolution of σ² at r<0.2 kpc showing thermalization (first Gyr) then divergence at collapse. Initial rapid heating drives all models toward thermal equilibrium. Peak values vary systematically with β, demonstrating anisotropy's influence on core heating during gravothermal collapse.</sup></sub></td>
+<td class="justify"><sub><sup><b>Anisotropy Parameter Evolution:</b> Time evolution of β(r<0.2 kpc) for three models (β=-1/2, 0, 1/2). Initial anisotropy preserved at t=0, then rapid SIDM-driven thermalization toward isotropy (β→0) within first Gyr. Demonstrates self-interactions' powerful isotropizing effect regardless of initial orbital distribution.</sup></sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="33%"><img src="img/aniso_fig3a_om_dispersion.png" alt="OM Velocity Dispersion" style="width:100%;"></td>
+<td width="33%"><img src="img/aniso_fig3b_om_collapse.png" alt="OM Collapse Time vs β(r_s)" style="width:100%;"></td>
+<td width="33%"><img src="img/aniso_fig4_theoretical.png" alt="Theoretical Velocity Dispersion Profiles" style="width:100%;"></td>
+</tr>
+<tr>
+<td class="justify"><sub><sup><b>Osipkov-Merritt Velocity Dispersion Evolution:</b> Central σ² evolution for 11 OM models with β(r_s) ranging from 0.05 to 0.80. Collapse timing varies non-monotonically spanning 4-12 Gyr. Models with intermediate anisotropy (β(r_s)~0.2-0.3, yellow-green curves) exhibit longest collapse times, while both low and high anisotropy models collapse earlier.</sup></sub></td>
+<td class="justify"><sub><sup><b>Collapse Time vs β(r_s):</b> Non-monotonic relationship between OM characteristic anisotropy β(r_s) and gravothermal collapse time (measured at 0.1% threshold). Peak collapse time ~12 Gyr at β(r_s)~0.25, decreasing to ~4.5 Gyr (isotropic) and ~7 Gyr (β(r_s)=0.8). Demonstrates complex interplay between radially-varying velocity anisotropy and core collapse dynamics.</sup></sub></td>
+<td class="justify"><sub><sup><b>Initial Velocity Dispersion Profiles:</b> Theoretical σ²(r) calculated from distribution functions via Jeans equation. Blue solid curves show 5 constant-β models (-0.5 to 0.5), red dashed curves show 4 OM models (r_a = 0.33, 1.0, 3.3, 10.0 × r_s). Demonstrates how different anisotropy models produce distinct global velocity-dispersion profiles despite identical density distributions. Log-log scale reveals power-law behavior at small and large radii.</sup></sub></td>
+</tr>
+</table>
+
+<p class="center">Please see <a href="https://arxiv.org/abs/2510.23705">arXiv:2510.23705</a> for further details.</p>
+
+</body>
+</html>

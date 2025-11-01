@@ -1,0 +1,1148 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anisotropic SIDM Halo Analysis &mdash; NSphere  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="SIDM Core Collapse Analysis, Visualization and Plots" href="nsphere_notebook_example2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            NSphere
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../command_line/index.html">Command-Line Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data_flow/index.html">Data and Results Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data_flow/index.html#output-file-reference">Output File Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../c_api/index.html">C API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api/index.html">Python API Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="nsphere_notebook_example1.html">Visualization of NSphere Phase Space and Density Evolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsphere_notebook_example2.html">SIDM Core Collapse Analysis, Visualization and Plots</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Anisotropic SIDM Halo Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Data-Generation-Commands">Data Generation Commands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Figure-1:-Initial-Phase-Space-Distributions-for-Different-β-Values">Figure 1: Initial Phase-Space Distributions for Different β Values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Figures-2a,-2b,-2c:-Evolution-Analysis-for-5-Constant-β-Models">Figures 2a, 2b, 2c: Evolution Analysis for 5 Constant-β Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Figures-3a,-3b:-Osipkov-Merritt-Model-Analysis">Figures 3a, 3b: Osipkov-Merritt Model Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Figure-4:-Theoretical-Velocity-Dispersion-Profiles">Figure 4: Theoretical Velocity Dispersion Profiles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">NSphere</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Examples</a></li>
+      <li class="breadcrumb-item active">Anisotropic SIDM Halo Analysis</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/examples/notebooks/nsphere_notebook_example3.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This example notebook demonstrates NSphere visualization techniques.
+The original notebook can be found in the examples directory of the NSphere project.</p>
+</div>
+<p>Copyright 2025 Marc Kamionkowski and Kris Sigurdson. Licensed under Apache-2.0 (<a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>).</p>
+<p>This notebook demonstrates visualization and analysis of anisotropic velocity distributions in self-interacting dark matter halos. It reproduces all figures from the paper “Gravothermal collapse of self-interacting dark-matter halos with anisotropic velocity distributions.”</p>
+<p>You must have successfully installed NSphere by following the instructions in the main <a class="reference external" href="https://github.com/kris-sigurdson/NSphere">README</a>. Ensure the <code class="docutils literal notranslate"><span class="pre">nsphere</span></code> Python virtual environment is activated (<code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">./activate_nsphere</span></code> from the project root).</p>
+<p>This Jupyter notebook is set up to be run from the <code class="docutils literal notranslate"><span class="pre">NSphere-SIDM/examples</span></code> subdirectory.</p>
+<section id="Anisotropic-SIDM-Halo-Analysis">
+<h1>Anisotropic SIDM Halo Analysis<a class="headerlink" href="#Anisotropic-SIDM-Halo-Analysis" title="Link to this heading"></a></h1>
+<section id="Data-Generation-Commands">
+<h2>Data Generation Commands<a class="headerlink" href="#Data-Generation-Commands" title="Link to this heading"></a></h2>
+<p>This notebook requires simulation data generated with the following commands from the <code class="docutils literal notranslate"><span class="pre">NSphere-SIDM</span></code> directory:</p>
+<p><strong>Constant-β models</strong> (5 runs for <strong>Figure 1</strong>, <strong>Figure 2</strong>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Beta = 0 (isotropic)</span>
+./nsphere<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ntimesteps<span class="w">   </span><span class="m">6250001</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nout<span class="w">         </span><span class="m">250</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtwrite<span class="w">      </span><span class="m">25000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tfinal<span class="w">       </span><span class="m">300</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--profile<span class="w">      </span>hernquist<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--scale-radius<span class="w"> </span><span class="m">1</span>.18<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--halo-mass<span class="w">    </span><span class="m">2</span>.818e8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sort<span class="w">         </span><span class="m">6</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--master-seed<span class="w">  </span><span class="m">42</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sidm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tag<span class="w">          </span>beta0.0
+
+<span class="c1"># Beta = 0.5 (radial)</span>
+./nsphere<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ntimesteps<span class="w">   </span><span class="m">6250001</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nout<span class="w">         </span><span class="m">250</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtwrite<span class="w">      </span><span class="m">25000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tfinal<span class="w">       </span><span class="m">300</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--profile<span class="w">      </span>hernquist<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--scale-radius<span class="w"> </span><span class="m">1</span>.18<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--halo-mass<span class="w">    </span><span class="m">2</span>.818e8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sort<span class="w">         </span><span class="m">6</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--master-seed<span class="w">  </span><span class="m">42</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sidm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tag<span class="w">          </span>beta0.5<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--aniso-beta<span class="w">   </span><span class="m">0</span>.5
+</pre></div>
+</div>
+<p>Additional runs use <code class="docutils literal notranslate"><span class="pre">--aniso-beta</span> <span class="pre">-0.5</span></code> (tag <code class="docutils literal notranslate"><span class="pre">beta-0.5</span></code>), <code class="docutils literal notranslate"><span class="pre">--aniso-beta</span> <span class="pre">-0.25</span></code> (tag <code class="docutils literal notranslate"><span class="pre">beta-0.25</span></code>), and <code class="docutils literal notranslate"><span class="pre">--aniso-beta</span> <span class="pre">0.25</span></code> (tag <code class="docutils literal notranslate"><span class="pre">beta0.25</span></code>) with the same parameters.</p>
+<p><strong>Osipkov-Merritt models</strong> (11 runs for <strong>Figure 3</strong>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example: Beta(r_s) = 0.25 (extended run)</span>
+./nsphere<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ntimesteps<span class="w">      </span><span class="m">9375001</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--nout<span class="w">            </span><span class="m">375</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtwrite<span class="w">         </span><span class="m">25000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tfinal<span class="w">          </span><span class="m">450</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--profile<span class="w">         </span>hernquist<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--scale-radius<span class="w">    </span><span class="m">1</span>.18<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--halo-mass<span class="w">       </span><span class="m">2</span>.818e8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sort<span class="w">            </span><span class="m">6</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--master-seed<span class="w">     </span><span class="m">42</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sidm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tag<span class="w">             </span>betascale0.25<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--aniso-betascale<span class="w"> </span><span class="m">0</span>.25
+</pre></div>
+</div>
+<p>Additional runs with <code class="docutils literal notranslate"><span class="pre">--aniso-betascale</span></code>: 0.05, 0.10, 0.15, 0.175, 0.40, 0.50, 0.60, 0.70 use the same extended parameters with corresponding tags. The isotropic run and β(r_s)=0.80 use standard parameters (tfinal=300, nout=250, ntimesteps=6250001).</p>
+<p><strong>Figure 4</strong> requires no simulation data (analytical calculations only).</p>
+<p>For more information on NSphere, see the <a class="reference external" href="https://kris-sigurdson.github.io/NSphere/">full documentation</a>.</p>
+</section>
+<section id="Figure-1:-Initial-Phase-Space-Distributions-for-Different-β-Values">
+<h2>Figure 1: Initial Phase-Space Distributions for Different β Values<a class="headerlink" href="#Figure-1:-Initial-Phase-Space-Distributions-for-Different-β-Values" title="Link to this heading"></a></h2>
+<p>This cell creates the 3-panel phase-space comparison showing how the initial radial velocity distribution changes with anisotropy parameter β.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import necessary libraries</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">quad</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Define the record dtype for binary data files</span>
+<span class="n">record_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([</span>
+    <span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mass&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;Vrad&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;PsiA&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="c1"># Define the paths to initial condition files for each beta value</span>
+<span class="n">paths</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=-1/2$&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00000_beta-0.5_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=0$&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00000_beta0.0_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=1/2$&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00000_beta0.5_100000_6250001_300.dat&quot;</span>
+<span class="p">}</span>
+
+<span class="c1"># Define bin edges for radius (R) and radial velocity (Vrad)</span>
+<span class="n">bin_edges_R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>      <span class="c1"># 0 to 10 kpc in steps of 0.2</span>
+<span class="n">bin_edges_V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>      <span class="c1"># -50 to 50 km/s in steps of 1</span>
+
+<span class="c1"># Storage for histograms</span>
+<span class="n">histograms</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="c1"># Process each file</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">paths</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">alldata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">record_dtype</span><span class="p">)</span>
+        <span class="n">data_R</span> <span class="o">=</span> <span class="n">alldata</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span>
+        <span class="n">data_Vrad</span> <span class="o">=</span> <span class="n">alldata</span><span class="p">[</span><span class="s1">&#39;Vrad&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1.023e-3</span>  <span class="c1"># Convert to km/s</span>
+
+        <span class="c1"># Compute 2D histogram</span>
+        <span class="n">hist</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="n">data_R</span><span class="p">,</span> <span class="n">data_Vrad</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="n">bin_edges_R</span><span class="p">,</span> <span class="n">bin_edges_V</span><span class="p">])</span>
+        <span class="n">smoothed_hist</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">))</span>
+        <span class="n">histograms</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">smoothed_hist</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">histograms</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">bin_edges_R</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bin_edges_V</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="c1"># Create the 3-panel figure</span>
+<span class="n">vmax</span> <span class="o">=</span> <span class="mi">240</span>  <span class="c1"># Match paper scale</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">hist</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">histograms</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+                   <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">bin_edges_R</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bin_edges_R</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">bin_edges_V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bin_edges_V</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
+                   <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$r$ (kpc)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$v_r$ (km/s)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="o">-</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">])</span>
+
+<span class="c1"># Add title and colorbar BEFORE tight_layout</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Initial Phase-Space Density for Different $\beta$ Values&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.98</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axes</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Count&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+
+<span class="c1"># Save Figure 1 as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig1.pdf - the initial phase-space density plot</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig1.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved: pdf/fig1.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saved: pdf/fig1.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_3_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_3_1.png" />
+</div>
+</div>
+</section>
+<section id="Figures-2a,-2b,-2c:-Evolution-Analysis-for-5-Constant-β-Models">
+<h2>Figures 2a, 2b, 2c: Evolution Analysis for 5 Constant-β Models<a class="headerlink" href="#Figures-2a,-2b,-2c:-Evolution-Analysis-for-5-Constant-β-Models" title="Link to this heading"></a></h2>
+<p>This cell analyzes the time evolution of:</p>
+<ul class="simple">
+<li><p><strong>Fig 2a</strong>: Particle count in innermost 0.02 kpc</p></li>
+<li><p><strong>Fig 2b</strong>: Velocity dispersion in inner 0.2 kpc</p></li>
+<li><p><strong>Fig 2c</strong>: Anisotropy parameter β evolution</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_filter1d</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">record_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([</span>
+    <span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mass&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;Vrad&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;PsiA&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="c1"># Define the five beta configurations</span>
+<span class="n">beta_configs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=-1/2$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_beta-0.5_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=-1/4$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_beta-0.25_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;purple&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=0$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_beta0.0_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=1/4$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_beta0.25_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;violet&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-.&#39;</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta=1/2$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_beta0.5_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">time_steps</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">threshold_particles</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="c1"># Process each beta configuration</span>
+<span class="k">for</span> <span class="n">beta_label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">beta_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">beta_label</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+
+    <span class="n">lowest_bin_counts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">msv_bins1_n_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">beta_bins1_n_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">actual_time_steps</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">time_step</span> <span class="ow">in</span> <span class="n">time_steps</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;path_template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestep</span><span class="o">=</span><span class="n">time_step</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">alldata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">record_dtype</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">threshold_particles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">alldata</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">threshold_particles</span> <span class="o">=</span> <span class="n">alldata</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">1000</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  0.1% threshold = </span><span class="si">{</span><span class="n">threshold_particles</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> particles (N=</span><span class="si">{</span><span class="n">alldata</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">alldata</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">radii</span> <span class="o">=</span> <span class="n">alldata</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span>
+            <span class="n">vrad</span> <span class="o">=</span> <span class="n">alldata</span><span class="p">[</span><span class="s1">&#39;Vrad&#39;</span><span class="p">]</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="n">alldata</span><span class="p">[</span><span class="s1">&#39;L&#39;</span><span class="p">]</span>
+
+            <span class="c1"># Calculate tangential velocity</span>
+            <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
+                <span class="n">vtangential</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">radii</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="n">L</span> <span class="o">/</span> <span class="n">radii</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+            <span class="c1"># Filter for valid particles</span>
+            <span class="n">valid_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">radii</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">vrad</span><span class="p">)</span> <span class="o">&amp;</span>
+                         <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">vtangential</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">radii</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">radii</span> <span class="o">=</span> <span class="n">radii</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+            <span class="n">vrad</span> <span class="o">=</span> <span class="n">vrad</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+            <span class="n">vtangential</span> <span class="o">=</span> <span class="n">vtangential</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+            <span class="c1"># Histogram and smoothing</span>
+            <span class="n">counts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">)</span>
+            <span class="n">smoothed_counts</span> <span class="o">=</span> <span class="n">gaussian_filter1d</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+            <span class="n">lowest_bin_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smoothed_counts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+            <span class="c1"># Velocity dispersion for inner bins</span>
+            <span class="n">bin_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">mask_bins1_n</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_indices</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bin_indices</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="n">vrad_bins1_n</span> <span class="o">=</span> <span class="n">vrad</span><span class="p">[</span><span class="n">mask_bins1_n</span><span class="p">]</span>
+            <span class="n">vtangential_bins1_n</span> <span class="o">=</span> <span class="n">vtangential</span><span class="p">[</span><span class="n">mask_bins1_n</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vrad_bins1_n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="n">mean_vr2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vrad_bins1_n</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.023e-3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">mean_vtan2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vtangential_bins1_n</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.023e-3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">msv_bins1_n</span> <span class="o">=</span> <span class="n">mean_vr2</span> <span class="o">+</span> <span class="n">mean_vtan2</span>
+
+                <span class="c1"># Calculate beta</span>
+                <span class="k">if</span> <span class="n">mean_vr2</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+                    <span class="n">beta_bins1_n</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">mean_vtan2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">mean_vr2</span><span class="p">)</span>
+                    <span class="n">beta_bins1_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">beta_bins1_n</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">beta_bins1_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msv_bins1_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="n">beta_bins1_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="n">msv_bins1_n_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msv_bins1_n</span><span class="p">)</span>
+            <span class="n">beta_bins1_n_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">beta_bins1_n</span><span class="p">)</span>
+            <span class="n">actual_time_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_step</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+    <span class="c1"># Convert to Gyr</span>
+    <span class="n">actual_time_steps_gyr</span> <span class="o">=</span> <span class="mf">10.801</span> <span class="o">/</span> <span class="mi">250</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">actual_time_steps</span><span class="p">)</span>
+    <span class="n">lowest_bin_counts_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lowest_bin_counts</span><span class="p">)</span>
+
+    <span class="c1"># Find peak</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lowest_bin_counts_array</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">max_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">lowest_bin_counts_array</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">max_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">results</span><span class="p">[</span><span class="n">beta_label</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">actual_time_steps_gyr</span><span class="p">[:</span><span class="n">max_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s1">&#39;time_full&#39;</span><span class="p">:</span> <span class="n">actual_time_steps_gyr</span><span class="p">,</span>
+        <span class="s1">&#39;lowest_bin_counts&#39;</span><span class="p">:</span> <span class="n">lowest_bin_counts_array</span><span class="p">[:</span><span class="n">max_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s1">&#39;lowest_bin_counts_full&#39;</span><span class="p">:</span> <span class="n">lowest_bin_counts_array</span><span class="p">,</span>
+        <span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">msv_bins1_n_list</span><span class="p">)[:</span><span class="n">max_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s1">&#39;beta_bins1_n&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">beta_bins1_n_list</span><span class="p">),</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Processed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> runs&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Processing $\beta=-1/2$...
+  0.1% threshold = 100.0 particles (N=100000)
+Processing $\beta=-1/4$...
+Processing $\beta=0$...
+Processing $\beta=1/4$...
+Processing $\beta=1/2$...
+
+Processed 5 runs
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2a: Particle count evolution</span>
+<span class="n">fig2a</span><span class="p">,</span> <span class="n">ax2a</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">beta_label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">ax2a</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lowest_bin_counts&#39;</span><span class="p">],</span>
+             <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span>
+             <span class="n">label</span><span class="o">=</span><span class="n">beta_label</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">ax2a</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$t$ (Gyr)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax2a</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$N_</span><span class="si">{0.02}</span><span class="s2">$&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax2a</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Number of particles with r &lt; 0.02 kpc&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax2a</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax2a</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">6.2</span><span class="p">)</span>
+<span class="n">ax2a</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+<span class="n">ax2a</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Save Figure 2a as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig2a.pdf - particle count evolution in central 0.02 kpc</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig2a.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved: pdf/fig2a.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saved: pdf/fig2a.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_6_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_6_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2b: Velocity dispersion evolution - truncate at σ² peak</span>
+<span class="n">fig2b</span><span class="p">,</span> <span class="n">ax2b</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">beta_label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">valid_msv</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_msv</span><span class="p">):</span>
+        <span class="n">msv_peak_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">][</span><span class="n">valid_msv</span><span class="p">])</span>
+        <span class="n">ax2b</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">valid_msv</span><span class="p">][:</span><span class="n">msv_peak_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+                 <span class="n">data</span><span class="p">[</span><span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">][</span><span class="n">valid_msv</span><span class="p">][:</span><span class="n">msv_peak_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+                 <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span>
+                 <span class="n">label</span><span class="o">=</span><span class="n">beta_label</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">ax2b</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$t$ (Gyr)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax2b</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\sigma^2$ (km/s)$^2$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax2b</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Velocity Dispersion at r &lt; 0.2 kpc&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax2b</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax2b</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">6.2</span><span class="p">)</span>
+<span class="n">ax2b</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Save Figure 2b as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig2b.pdf - velocity dispersion evolution in central 0.2 kpc</span>
+<span class="c1"># Each curve truncated at its σ² peak to avoid post-collapse artifacts</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig2b.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved: pdf/fig2b.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saved: pdf/fig2b.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_7_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_7_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 2c: Beta evolution - truncate at 0.1% threshold (collapse time)</span>
+<span class="n">fig2c</span><span class="p">,</span> <span class="n">ax2c</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="n">paper_betas</span> <span class="o">=</span> <span class="p">[</span><span class="sa">r</span><span class="s1">&#39;$\beta=-1/2$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\beta=0$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\beta=1/2$&#39;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">beta_label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">beta_label</span> <span class="ow">in</span> <span class="n">paper_betas</span><span class="p">:</span>
+        <span class="n">full_counts</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lowest_bin_counts_full&#39;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">time_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;time_full&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_counts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_full</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">threshold_mask</span> <span class="o">=</span> <span class="n">full_counts</span> <span class="o">&gt;=</span> <span class="n">threshold_particles</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">):</span>
+                <span class="n">threshold_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">)</span>
+                <span class="n">collapse_time</span> <span class="o">=</span> <span class="n">time_full</span><span class="p">[</span><span class="n">threshold_idx</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">collapse_time</span> <span class="o">=</span> <span class="n">time_full</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">collapse_time</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">valid_beta</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;beta_bins1_n&#39;</span><span class="p">])</span>
+        <span class="n">time_mask</span> <span class="o">=</span> <span class="n">time_full</span> <span class="o">&lt;=</span> <span class="n">collapse_time</span>
+        <span class="n">combined_mask</span> <span class="o">=</span> <span class="n">valid_beta</span> <span class="o">&amp;</span> <span class="n">time_mask</span>
+
+        <span class="n">ax2c</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_full</span><span class="p">[</span><span class="n">combined_mask</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;beta_bins1_n&#39;</span><span class="p">][</span><span class="n">combined_mask</span><span class="p">],</span>
+                 <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span>
+                 <span class="n">label</span><span class="o">=</span><span class="n">beta_label</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">ax2c</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$t$ (Gyr)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\beta$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Anisotropy at r &lt; 0.2 kpc&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">6.2</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax2c</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Save Figure 2c as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig2c.pdf - anisotropy β evolution for 3 representative runs</span>
+<span class="c1"># Each curve truncated at 0.1% threshold (when 100 particles enter r &lt; 0.02 kpc)</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig2c.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved: pdf/fig2c.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saved: pdf/fig2c.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_8_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_8_1.png" />
+</div>
+</div>
+</section>
+<section id="Figures-3a,-3b:-Osipkov-Merritt-Model-Analysis">
+<h2>Figures 3a, 3b: Osipkov-Merritt Model Analysis<a class="headerlink" href="#Figures-3a,-3b:-Osipkov-Merritt-Model-Analysis" title="Link to this heading"></a></h2>
+<p>Analyzes 11 Osipkov-Merritt models (isotropic plus 10 anisotropic configurations with β(r_s) from 0.05 to 0.80). Most models use extended runs (ntimesteps=9375001, nout=375, tfinal=450). The isotropic and β(r_s)=0.80 models use standard parameters (ntimesteps=6250001, nout=250, tfinal=300).</p>
+<p>These cells create:</p>
+<ul class="simple">
+<li><p><strong>Fig 3a</strong>: Central velocity dispersion evolution for all OM models</p></li>
+<li><p><strong>Fig 3b</strong>: Core collapse time vs anisotropy parameter β(r_s)</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Process OM models - ALL timesteps for each model</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_filter1d</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="n">kmsec_to_kpcmyr</span> <span class="o">=</span> <span class="mf">1.02271e-3</span>
+
+<span class="n">record_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([</span>
+    <span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mass&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;Vrad&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;PsiA&#39;</span><span class="p">,</span>  <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="n">om_configs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sa">r</span><span class="s1">&#39;Isotropic ($\beta=0$)&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">10.801</span><span class="o">/</span><span class="mi">250</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">False</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.05$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.05_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.10$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.1_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.15$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.15_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-.&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.175$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.175_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;teal&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.25$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.25_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;goldenrod&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.40$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.4_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-.&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.50$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.5_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;brown&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.60$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.6_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;magenta&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.70$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.7_100000_9375001_450.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">375</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">16.2</span><span class="o">/</span><span class="mi">375</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;olive&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">},</span>
+    <span class="sa">r</span><span class="s1">&#39;$\beta(r_s)=0.80$&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;path_template&#39;</span><span class="p">:</span> <span class="s2">&quot;../data/Rank_Mass_Rad_VRad_unsorted_t00</span><span class="si">{timestep:03d}</span><span class="s2">_betascale0.8_100000_6250001_300.dat&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;max_t&#39;</span><span class="p">:</span> <span class="mi">250</span><span class="p">,</span> <span class="s1">&#39;time_factor&#39;</span><span class="p">:</span> <span class="mf">10.801</span><span class="o">/</span><span class="mi">250</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;darkred&#39;</span><span class="p">,</span> <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="kc">True</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>
+<span class="n">results_om</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">threshold_particles</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">for</span> <span class="n">run_label</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">om_configs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">run_label</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+
+    <span class="n">lowest_bin_counts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">msv_bins1_n_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">actual_times</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;max_t&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fpath</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;path_template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestep</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">record_dtype</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">threshold_particles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">threshold_particles</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">1000</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  0.1% threshold = </span><span class="si">{</span><span class="n">threshold_particles</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> particles&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">radii</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span>
+            <span class="n">vrad</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Vrad&#39;</span><span class="p">]</span>
+
+            <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">radii</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">vrad</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">radii</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">)</span>
+            <span class="n">radii</span> <span class="o">=</span> <span class="n">radii</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
+            <span class="n">vrad</span> <span class="o">=</span> <span class="n">vrad</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
+
+            <span class="n">counts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">)</span>
+            <span class="n">smoothed</span> <span class="o">=</span> <span class="n">gaussian_filter1d</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+            <span class="n">lowest_bin_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smoothed</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+            <span class="n">bin_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_indices</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bin_indices</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="n">vrad_inner</span> <span class="o">=</span> <span class="n">vrad</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vrad_inner</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="n">msv</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vrad_inner</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.023e-3</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="n">msv_bins1_n_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msv</span><span class="p">)</span>
+            <span class="n">actual_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;time_factor&#39;</span><span class="p">])</span>
+
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Processed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">actual_times</span><span class="p">)</span><span class="si">}</span><span class="s2"> timesteps&quot;</span><span class="p">)</span>
+
+    <span class="n">results_om</span><span class="p">[</span><span class="n">run_label</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">actual_times</span><span class="p">),</span>
+        <span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">msv_bins1_n_list</span><span class="p">),</span>
+        <span class="s1">&#39;lowest_bin_counts_full&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lowest_bin_counts</span><span class="p">),</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;linestyle&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;linewidth&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linewidth&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;is_om&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;is_om&#39;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+<span class="c1"># Calculate threshold times</span>
+<span class="n">om_threshold_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">run_label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">results_om</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_om&#39;</span><span class="p">]:</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;beta\(r_s\)=([0-9.]+)&#39;</span><span class="p">,</span> <span class="n">run_label</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="n">beta_s</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lowest_bin_counts_full&#39;</span><span class="p">]</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+            <span class="n">threshold_mask</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">&gt;=</span> <span class="n">threshold_particles</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">):</span>
+                <span class="n">om_threshold_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;beta_s&#39;</span><span class="p">:</span> <span class="n">beta_s</span><span class="p">,</span>
+                    <span class="s1">&#39;t_0.1%&#39;</span><span class="p">:</span> <span class="n">times</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">)],</span>
+                    <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">]</span>
+                <span class="p">})</span>
+
+<span class="k">for</span> <span class="n">run_label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">results_om</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_om&#39;</span><span class="p">]:</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lowest_bin_counts_full&#39;</span><span class="p">]</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+        <span class="n">threshold_mask</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">&gt;=</span> <span class="n">threshold_particles</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">):</span>
+            <span class="n">om_threshold_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;beta_s&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s1">&#39;t_0.1%&#39;</span><span class="p">:</span> <span class="n">times</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">threshold_mask</span><span class="p">)],</span>
+                <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">]</span>
+            <span class="p">})</span>
+
+<span class="n">om_threshold_data</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">om_threshold_data</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;beta_s&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results_om</span><span class="p">)</span><span class="si">}</span><span class="s2"> models, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">om_threshold_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> cross threshold&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Processing Isotropic ($\beta=0$)...
+  0.1% threshold = 100.0 particles
+  Processed 251 timesteps
+Processing $\beta(r_s)=0.05$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.10$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.15$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.175$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.25$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.40$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.50$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.60$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.70$...
+  Processed 376 timesteps
+Processing $\beta(r_s)=0.80$...
+  Processed 251 timesteps
+Processed 11 models, 11 cross threshold
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 3a: Central velocity dispersion evolution for all OM models</span>
+<span class="c1"># Truncate each curve at its velocity dispersion peak</span>
+<span class="n">fig_v2</span><span class="p">,</span> <span class="n">ax_v2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">run_label</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">results_om</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Find velocity dispersion peak for THIS curve</span>
+        <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">valid_mask</span><span class="p">):</span>
+            <span class="n">msv_valid</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;msv_bins1_n&#39;</span><span class="p">][</span><span class="n">valid_mask</span><span class="p">]</span>
+            <span class="n">time_valid</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="n">valid_mask</span><span class="p">]</span>
+
+            <span class="c1"># Find peak in velocity dispersion</span>
+            <span class="n">msv_peak_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">msv_valid</span><span class="p">)</span>
+
+            <span class="c1"># Plot only up to velocity dispersion peak</span>
+            <span class="n">ax_v2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_valid</span><span class="p">[:</span><span class="n">msv_peak_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">msv_valid</span><span class="p">[:</span><span class="n">msv_peak_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>
+                     <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;linestyle&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">],</span>
+                     <span class="n">label</span><span class="o">=</span><span class="n">run_label</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;linewidth&#39;</span><span class="p">],</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$t$ (Gyr)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\sigma^2$ (km/s)$^2$&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Central Velocity Dispersion ($r &lt; 0.2$ kpc)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">12.4</span><span class="p">)</span>
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax_v2</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Save Figure 3a as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig3a.pdf - velocity dispersion for 11 Osipkov-Merritt models</span>
+<span class="c1"># Each curve shows evolution up to its σ² peak (extended runs to 16.2 Gyr where available)</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig3a.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved: pdf/fig3a.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saved: pdf/fig3a.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_11_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_11_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Figure 3b: Core collapse time vs anisotropy parameter</span>
+<span class="n">fig_beta</span><span class="p">,</span> <span class="n">ax_beta</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="k">if</span> <span class="n">om_threshold_data</span><span class="p">:</span>
+    <span class="n">beta_s_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;beta_s&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">om_threshold_data</span><span class="p">]</span>
+    <span class="n">t_threshold_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;t_0.1%&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">om_threshold_data</span><span class="p">]</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">om_threshold_data</span><span class="p">]</span>
+
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">beta_s_values</span><span class="p">,</span> <span class="n">t_threshold_values</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">beta_s_values</span><span class="p">,</span> <span class="n">t_threshold_values</span><span class="p">,</span> <span class="s2">&quot;k--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$\beta(r_s)$&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$t_{0.1\%}$ (Gyr)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;Core Collapse Time vs Anisotropy&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">beta_s_values</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.05</span> <span class="k">if</span> <span class="n">beta_s_values</span> <span class="k">else</span> <span class="mf">0.85</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax_beta</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">&quot;major&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Save Figure 3b as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig3b.pdf - collapse time (t_0.1%) vs β(r_s) for 11 OM models</span>
+<span class="c1"># Shows when 100 particles (0.1% threshold) first enter r &lt; 0.02 kpc</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig3b.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Saved: pdf/fig3b.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Saved: pdf/fig3b.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_12_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_12_1.png" />
+</div>
+</div>
+</section>
+<section id="Figure-4:-Theoretical-Velocity-Dispersion-Profiles">
+<h2>Figure 4: Theoretical Velocity Dispersion Profiles<a class="headerlink" href="#Figure-4:-Theoretical-Velocity-Dispersion-Profiles" title="Link to this heading"></a></h2>
+<p>This cell calculates theoretical velocity dispersion profiles using the Jeans equation. No simulation data required - purely analytical calculations for:</p>
+<ul class="simple">
+<li><p><strong>Model 1</strong>: Constant β (5 values: -0.5, -0.25, 0, 0.25, 0.5)</p></li>
+<li><p><strong>Model 2</strong>: Osipkov-Merritt with variable β(r) (4 r_a values)</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">quad</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mpl</span>
+
+<span class="c1"># Set up for publication quality</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;font.size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">14</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;xtick.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;ytick.labelsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;legend.fontsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;figure.figsize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;lines.linewidth&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="c1"># Physical constants</span>
+<span class="n">G</span> <span class="o">=</span> <span class="mf">4.302e-6</span>  <span class="c1"># kpc (km/s)^2 / M_sun</span>
+<span class="n">r_s</span> <span class="o">=</span> <span class="mf">1.18</span>  <span class="c1"># kpc</span>
+<span class="n">rho_s</span> <span class="o">=</span> <span class="mf">2.73e7</span>  <span class="c1"># M_sun / kpc^3</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Constants:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  G = </span><span class="si">{</span><span class="n">G</span><span class="si">}</span><span class="s1"> kpc (km/s)^2 / M_sun&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  r_s = </span><span class="si">{</span><span class="n">r_s</span><span class="si">}</span><span class="s1"> kpc&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  rho_s = </span><span class="si">{</span><span class="n">rho_s</span><span class="si">}</span><span class="s1"> M_sun / kpc^3&#39;</span><span class="p">)</span>
+
+<span class="c1"># Define functions for Hernquist profile</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">M</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enclosed mass function&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">rho_s</span> <span class="o">*</span> <span class="n">r_s</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">r_s</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">n</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number density function&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">((</span><span class="n">r</span><span class="o">/</span><span class="n">r_s</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">r</span><span class="o">/</span><span class="n">r_s</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Model 1: Constant beta</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">integrand_model1</span><span class="p">(</span><span class="n">r_prime</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrand for model 1&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">r_prime</span><span class="o">**</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">beta</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">(</span><span class="n">r_prime</span><span class="p">)</span> <span class="o">*</span> <span class="n">M</span><span class="p">(</span><span class="n">r_prime</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">v_r_squared_model1</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Radial velocity dispersion squared for model 1&quot;&quot;&quot;</span>
+    <span class="n">integral</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">quad</span><span class="p">(</span><span class="n">integrand_model1</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">beta</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">G</span> <span class="o">*</span> <span class="n">integral</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">v_squared_model1</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">beta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total velocity dispersion squared for model 1&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">v_r_squared_model1</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">3</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">beta</span><span class="p">)</span>
+
+<span class="c1"># Model 2: Variable beta (Osipkov-Merritt)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">beta_model2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Beta function for model 2&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">r_a</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">integrand_model2</span><span class="p">(</span><span class="n">r_prime</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integrand for model 2&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">r_a</span><span class="o">/</span><span class="n">r_prime</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">(</span><span class="n">r_prime</span><span class="p">)</span> <span class="o">*</span> <span class="n">M</span><span class="p">(</span><span class="n">r_prime</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">v_r_squared_model2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Radial velocity dispersion squared for model 2&quot;&quot;&quot;</span>
+    <span class="n">integral</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">quad</span><span class="p">(</span><span class="n">integrand_model2</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">G</span> <span class="o">*</span> <span class="n">integral</span> <span class="o">/</span> <span class="p">((</span><span class="n">r_a</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">r</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">v_squared_model2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Total velocity dispersion squared for model 2&quot;&quot;&quot;</span>
+    <span class="n">beta_r</span> <span class="o">=</span> <span class="n">beta_model2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">v_r_squared_model2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">3</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">beta_r</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Functions defined:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  Model 1 (constant β): v_squared_model1(r, beta)&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  Model 2 (OM): v_squared_model2(r, r_a)&#39;</span><span class="p">)</span>
+
+<span class="c1"># Create the plot</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Generating velocity dispersion profiles...&#39;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+
+<span class="c1"># Radius range (in kpc)</span>
+<span class="n">r_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># 0.01 to 10 kpc</span>
+
+<span class="c1"># Model 1: Plot for different beta values</span>
+<span class="n">beta_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.25</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]</span>
+<span class="n">colors_model1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">Blues</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">beta_values</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Model 1: Computing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">beta_values</span><span class="p">)</span><span class="si">}</span><span class="s1"> constant-β profiles...&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">beta</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">beta_values</span><span class="p">,</span> <span class="n">colors_model1</span><span class="p">):</span>
+    <span class="n">v2_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v_squared_model1</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">r_range</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_range</span><span class="p">,</span> <span class="n">v2_values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Model 1: β = </span><span class="si">{</span><span class="n">beta</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  β = </span><span class="si">{</span><span class="n">beta</span><span class="si">:</span><span class="s1">5.2f</span><span class="si">}</span><span class="s1">: complete&#39;</span><span class="p">)</span>
+
+<span class="c1"># Model 2: Plot for different r_a values</span>
+<span class="n">r_a_factors</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.33</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.3</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]</span>
+<span class="n">r_a_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">factor</span> <span class="o">*</span> <span class="n">r_s</span> <span class="k">for</span> <span class="n">factor</span> <span class="ow">in</span> <span class="n">r_a_factors</span><span class="p">]</span>
+<span class="n">colors_model2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">Reds</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_a_values</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Model 2: Computing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">r_a_values</span><span class="p">)</span><span class="si">}</span><span class="s1"> OM profiles...&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r_a</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">r_a_values</span><span class="p">,</span> <span class="n">r_a_factors</span><span class="p">,</span> <span class="n">colors_model2</span><span class="p">):</span>
+    <span class="n">v2_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v_squared_model2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r_a</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">r_range</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r_range</span><span class="p">,</span> <span class="n">v2_values</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Model 2: $r_a$ = </span><span class="si">{</span><span class="n">factor</span><span class="si">}</span><span class="s1">$r_s$&#39;</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  r_a = </span><span class="si">{</span><span class="n">factor</span><span class="si">:</span><span class="s1">4.1f</span><span class="si">}</span><span class="s1">r_s: complete&#39;</span><span class="p">)</span>
+
+<span class="c1"># Formatting with log-log scale</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$r$ (kpc)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\sigma^2$ (km/s)$^2$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Create a two-column legend</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">,</span> <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Save Figure 4 as PDF (matching paper figure)</span>
+<span class="c1"># This generates pdf/fig4.pdf - theoretical velocity dispersion profiles from Jeans equation</span>
+<span class="c1"># Model 1: 5 constant-β profiles (blue solid lines)</span>
+<span class="c1"># Model 2: 4 Osipkov-Merritt profiles with variable β(r) (red dashed lines)</span>
+<span class="c1"># Comment out the lines below if you only want to view the figure without saving</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pdf/fig4.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Saved: pdf/fig4.pdf&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Constants:
+  G = 4.302e-06 kpc (km/s)^2 / M_sun
+  r_s = 1.18 kpc
+  rho_s = 27300000.0 M_sun / kpc^3
+Functions defined:
+  Model 1 (constant β): v_squared_model1(r, beta)
+  Model 2 (OM): v_squared_model2(r, r_a)
+
+Generating velocity dispersion profiles...
+
+Model 1: Computing 5 constant-β profiles...
+  β =  0.50: complete
+  β =  0.25: complete
+  β =  0.00: complete
+  β = -0.25: complete
+  β = -0.50: complete
+
+Model 2: Computing 4 OM profiles...
+  r_a =  0.3r_s: complete
+  r_a =  1.0r_s: complete
+  r_a =  3.3r_s: complete
+  r_a = 10.0r_s: complete
+
+Saved: pdf/fig4.pdf
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/examples_notebooks_nsphere_notebook_example3_14_1.png" src="../../_images/examples_notebooks_nsphere_notebook_example3_14_1.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nsphere_notebook_example2.html" class="btn btn-neutral float-left" title="SIDM Core Collapse Analysis, Visualization and Plots" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kris Sigurdson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

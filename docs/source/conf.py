@@ -31,7 +31,15 @@ extensions = [
     'sphinx.ext.napoleon',     # Support for NumPy and Google style docstrings
     'breathe',                 # Bridge between Doxygen and Sphinx
     'nbsphinx',                # Support for Jupyter notebooks
+    'sphinx.ext.mathjax',      # Enable MathJax for LaTeX rendering
 ]
+
+# Configure MathJax to load from a CDN (Content Delivery Network) for LaTeX rendering
+# Using MathJax version 3
+mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+
+# Disable smart quotes to prevent '--' from becoming em-dashes incorrectly
+smartquotes = False
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

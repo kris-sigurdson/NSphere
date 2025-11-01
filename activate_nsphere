@@ -270,9 +270,7 @@ else
     else
         echo "All required packages are installed correctly."
     fi
-    
-    echo "Activating environment for this session..."
-    echo "------------------------------------------------------------------"
+
 fi
 
 # --- Activation Attempt ---
@@ -284,15 +282,54 @@ if [ -f "$ACTIVATION_SCRIPT" ]; then
     if [ -z "$VIRTUAL_ENV" ] || [ "$VIRTUAL_ENV" != "$VENV_PATH" ]; then
          source "$ACTIVATION_SCRIPT"
          if [ $? -eq 0 ]; then
+             echo "Activating environment for this session..."
+
+             # Trust example notebooks if not already trusted
+             notebooks_to_sign=()
+             for notebook in examples/nsphere_notebook_example*.ipynb; do
+                 [ -f "$notebook" ] || continue
+
+                 # Check if already trusted
+                 is_trusted=$(python3 -c "
+from nbformat.sign import NotebookNotary
+import nbformat
+import warnings
+warnings.filterwarnings('ignore')
+try:
+    with open('$notebook', 'r') as f:
+        nb = nbformat.read(f, as_version=4)
+    notary = NotebookNotary()
+    print('yes' if notary.check_signature(nb) else 'no')
+except:
+    print('no')
+" 2>/dev/null)
+
+                 if [ "$is_trusted" != "yes" ]; then
+                     notebooks_to_sign+=("$notebook")
+                 fi
+             done
+
+             # Sign notebooks if needed and show summary
+             if [ ${#notebooks_to_sign[@]} -gt 0 ]; then
+                 if [ ${#notebooks_to_sign[@]} -eq 1 ]; then
+                     echo "Signing 1 example notebook."
+                 else
+                     echo "Signing ${#notebooks_to_sign[@]} example notebooks."
+                 fi
+                 for notebook in "${notebooks_to_sign[@]}"; do
+                     jupyter trust "$notebook" &>/dev/null
+                 done
+             fi
+
+             echo "------------------------------------------------------------------"
              echo "Environment '$VENV_NAME' activated."
+
              echo "Your prompt should now show '($VENV_NAME)'."
              echo "-------------------------------------------------------------------"
              echo "If '($VENV_NAME)' is not in your prompt, you didn't run with source."
              echo "Run either 'source ./activate_nsphere' or '. ./activate_nsphere'."
              echo "-------------------------------------------------------------------"
-             echo "You can now run NSphere executables like './nsphere_plot'."
-             
-             # Check environment configuration 
+             # Check environment configuration
              if [ $IS_MSYS -eq 1 ]; then
                  # For MSYS2, verify system packages are accessible
                  if grep -q "include-system-site-packages = true" "$VENV_PATH/pyvenv.cfg" 2>/dev/null; then
@@ -303,11 +340,13 @@ if [ -f "$ACTIVATION_SCRIPT" ]; then
                      echo "Consider removing '$VENV_PATH' and running this script again."
                  fi
              fi
-             
+
              # Optional: Check if pip is available after activation
              if ! command -v pip &> /dev/null; then
                  echo "WARNING: 'pip' command not found after activation. Dependency management might be affected." >&2
              fi
+
+             echo "You can now run NSphere executables like './nsphere_plot'."
          else
              echo "ERROR: Failed to source activation script '$ACTIVATION_SCRIPT'." >&2
              echo "Please activate manually: source $VENV_DIR_NAME/$VENV_NAME/bin/activate" >&2

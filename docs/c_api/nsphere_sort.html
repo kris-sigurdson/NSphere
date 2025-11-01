@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NSphere Sort (nsphere_sort.h) &mdash; NSphere  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuadSort (quadsort.c / quadsort.h)" href="quadsort.html" />
+    <link rel="prev" title="NSphere Core (nsphere.c)" href="nsphere_core.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            NSphere
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../command_line/index.html">Command-Line Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_flow/index.html">Data and Results Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_flow/index.html#output-file-reference">Output File Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">C API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="nsphere_core.html">NSphere Core (nsphere.c)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">NSphere Sort (nsphere_sort.h)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c.ns_sort_array"><code class="docutils literal notranslate"><span class="pre">ns_sort_array</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.ns_sort_extended"><code class="docutils literal notranslate"><span class="pre">ns_sort_extended</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.ns_sort_prim"><code class="docutils literal notranslate"><span class="pre">ns_sort_prim</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.ns_sort_size"><code class="docutils literal notranslate"><span class="pre">ns_sort_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv420ns_quadsort_extendedPv6size_t6size_tP7CMPFUNC"><code class="docutils literal notranslate"><span class="pre">ns_quadsort_extended()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="quadsort.html">QuadSort (<cite>quadsort.c</cite> / <cite>quadsort.h</cite>)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../python_api/index.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NSphere</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">C API Reference</a></li>
+      <li class="breadcrumb-item active">NSphere Sort (nsphere_sort.h)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/c_api/nsphere_sort.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="nsphere-sort-nsphere-sort-h">
+<h1>NSphere Sort (nsphere_sort.h)<a class="headerlink" href="#nsphere-sort-nsphere-sort-h" title="Link to this heading"></a></h1>
+<p>Clean wrapper for quadsort to suppress warnings and add support for doubles. </p>
+<p>This header provides a clean interface to quadsort by:<ol class="arabic simple">
+<li><p>Containing all warnings through pragma directives</p></li>
+<li><p>Adding support for double and long double types</p></li>
+<li><p>Keeping the original quadsort implementation pristine</p></li>
+</ol>
+</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This wrapper is specifically designed for the NSphere simulation system to ensure consistent sorting behavior across all numerical types. </p>
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-defines">Defines</p>
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.ns_sort_array">
+<span class="target" id="nsphere__sort_8h_1a3db7cbccd3725443ff37873bc5e9aa70"></span><span class="sig-name descname"><span class="n"><span class="pre">ns_sort_array</span></span></span><a class="headerlink" href="#c.ns_sort_array" title="Link to this definition"></a><br /></dt>
+<dd><p>Restore warning settings to their previous state. </p>
+<p>Pops the diagnostic pragma stack to restore compiler warning settings that were modified earlier in this header.</p>
+<p>Define clean aliases to quadsort functions with zero overhead</p>
+<p>These macros provide a consistent naming convention for sorting functions in the NSphere codebase, making it clear which functions are part of the NSphere API rather than direct quadsort calls. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.ns_sort_extended">
+<span class="target" id="nsphere__sort_8h_1a28e85ab689573d5651876f06a1f63b58"></span><span class="sig-name descname"><span class="n"><span class="pre">ns_sort_extended</span></span></span><a class="headerlink" href="#c.ns_sort_extended" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.ns_sort_prim">
+<span class="target" id="nsphere__sort_8h_1aaef0e0b6d9656a716d4cbae7855d445b"></span><span class="sig-name descname"><span class="n"><span class="pre">ns_sort_prim</span></span></span><a class="headerlink" href="#c.ns_sort_prim" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.ns_sort_size">
+<span class="target" id="nsphere__sort_8h_1afeb553496649ee2b0aebd6068a386c61"></span><span class="sig-name descname"><span class="n"><span class="pre">ns_sort_size</span></span></span><a class="headerlink" href="#c.ns_sort_size" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv420ns_quadsort_extendedPv6size_t6size_tP7CMPFUNC">
+<span class="target" id="nsphere__sort_8h_1a9e16bdd3460662f1127056b02a6a30dd"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ns_quadsort_extended</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">array</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nmemb</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span>, <a class="reference internal" href="quadsort.html#_CPPv47CMPFUNC" title="CMPFUNC"><span class="n"><span class="pre">CMPFUNC</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv420ns_quadsort_extendedPv6size_t6size_tP7CMPFUNC" title="Link to this definition"></a><br /></dt>
+<dd><p>Push current warning state and disable specific warnings. </p>
+<p>These pragma directives are used to suppress compiler warnings that would otherwise be generated by the quadsort implementation. This allows us to use the original quadsort code without modification.</p>
+<p>Include the original quadsort header with warnings suppressed</p>
+<p>The GCC/Clang warning suppression includes &quot;-Wmacro-redefined&quot; to allow quadsort.h to define QUAD_CACHE even though it may be defined via compiler flags. This approach preserves dynamic cache sizing from Makefiles while allowing direct inclusion in other contexts.</p>
+<p>NSphere extensions to quadsort - Support for double and long double types</p>
+<p>These extensions add specialized sorting implementations for floating-point types that may not be efficiently handled by the standard quadsort. They are conditionally compiled based on compiler support.</p>
+<p>Extended quadsort function with support for double and long double types</p>
+<p>This function extends the standard quadsort implementation to handle double and long double types with specialized implementations. For other types, it falls back to the standard quadsort. This provides optimal performance for all data types used in the NSphere simulation system.</p>
+<section id="nsphere__sort_8h_1autotoc_md0_1s1">
+<h2><a class="headerlink" href="#nsphere__sort_8h_1autotoc_md0_1s1" title="Link to this heading"></a></h2>
+<section id="nsphere__sort_8h_1autotoc_md0">
+<span id="nsphere__sort_8h_1autotoc_md0_1s1"></span><h3>Parameters<a class="headerlink" href="#nsphere__sort_8h_1autotoc_md0" title="Link to this heading"></a></h3>
+<p id="nsphere__sort_8h_1autotoc_md0">array : void* Pointer to the array to be sorted. nmemb : size_t Number of elements in the array. size : size_t Size of each element in bytes. cmp : CMPFUNC* Pointer to comparison function that returns negative, zero, or positive if first argument is less than, equal to, or greater than the second.</p>
+</section>
+</section>
+<section id="nsphere__sort_8h_1autotoc_md1_1s1">
+<h2><a class="headerlink" href="#nsphere__sort_8h_1autotoc_md1_1s1" title="Link to this heading"></a></h2>
+<section id="nsphere__sort_8h_1autotoc_md1">
+<span id="nsphere__sort_8h_1autotoc_md1_1s1"></span><h3>Returns<a class="headerlink" href="#nsphere__sort_8h_1autotoc_md1" title="Link to this heading"></a></h3>
+<p id="nsphere__sort_8h_1autotoc_md1">None</p>
+<p><div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="quadsort.html#quadsort_8c_1aa5334589d2edfc8333aa1bbcc21c5d6d"><span class="std std-ref">quadsort</span></a> - The original implementation used for standard types. </p>
+</div>
+</p>
+</section>
+</section>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function automatically selects the appropriate sorting implementation based on the element size, providing optimized sorting for double and long double types when supported by the compiler. </p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The implementation for double and long double is only available when compiled with GCC or compatible compilers. </p>
+</div>
+</dd></dl>
+
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nsphere_core.html" class="btn btn-neutral float-left" title="NSphere Core (nsphere.c)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="quadsort.html" class="btn btn-neutral float-right" title="QuadSort (quadsort.c / quadsort.h)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kris Sigurdson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -67,6 +67,7 @@ CFLAGS = -Ofast \
          $(DEBUG_FLAGS) \
          -funroll-loops \
          -ffast-math \
+         -fno-finite-math-only \
          -fno-math-errno \
          -ffp-contract=fast \
          -Wall -Wextra \
@@ -139,7 +140,7 @@ endif
 # --- Configuration for Single-Threaded Build ---
 # ================================================================
 # Flag set for explicitly requested non-OpenMP builds
-NO_OMP_CFLAGS = -Ofast -march=native -funroll-loops -ffast-math -fno-math-errno -ffp-contract=fast -Wall -Wextra -I/usr/include -I$(C_SRC_DIR)
+NO_OMP_CFLAGS = -Ofast -march=native -funroll-loops -ffast-math -fno-finite-math-only -fno-math-errno -ffp-contract=fast -Wall -Wextra -I/usr/include -I$(C_SRC_DIR)
 NO_OMP_LDFLAGS = -L/usr/lib
 
 # ================================================================

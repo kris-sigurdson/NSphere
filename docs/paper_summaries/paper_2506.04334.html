@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Results from SIDM Simulations - NSphere</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #24292e;
+        }
+        h1 {
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 0.3em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        td {
+            padding: 10px;
+            vertical-align: top;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        .center {
+            text-align: center;
+        }
+        .justify {
+            text-align: justify;
+        }
+        sub sup {
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Key Results from SIDM Simulations</h1>
+
+<div class="center">
+    <img src="img/nsphere_sidm_paper_abstract.png" alt="SIDM Paper Abstract" style="width:80%;">
+</div>
+
+<p class="center"><sub>Explore these results online in our <a href="https://kris-sigurdson.github.io/NSphere/examples/notebooks/nsphere_notebook_example2.html">Example 2 Notebook</a> which reproduces all paper figures with phase-space and density evolution animations.</sub></p>
+
+<table>
+<tr>
+<td width="33%"><img src="img/Phase_Space_Animation_SIDM.gif" alt="SIDM Phase Space Evolution" style="width:100%;"></td>
+<td width="33%"><img src="img/Phase_Space_Animation_SIDM_Core.gif" alt="SIDM Core Collapse" style="width:100%;"></td>
+<td width="33%"><img src="img/Number_Distribution_Evolution_SIDM.gif" alt="Number Distribution Evolution" style="width:100%;"></td>
+</tr>
+<tr>
+<td class="justify"><sub><sup><b>SIDM Phase Space Evolution:</b> Animation showing the complete 19.6 Gyr evolution of the phase space (r, v<sub>r</sub>) distribution for 10<sup>5</sup> particles with σ/m = 50 cm²/g. The system begins with an NFW profile and evolves under both gravity and SIDM scattering. Core formation becomes evident after ~15 Gyr, followed by rapid collapse.</sup></sub></td>
+<td class="justify"><sub><sup><b>Collapse of Core Region:</b> Zoomed view of the central 0.5 kpc during the critical gravothermal collapse period from 12.4 Gyr to 16.4 Gyr. The phase space shows dramatic heating and concentration of particles as the core density rises exponentially. Color scale emphasizes high-density regions using power-law normalization.</sup></sub></td>
+<td class="justify"><sub><sup><b>Particle Distribution Evolution:</b> Animation of N(r) showing particles per radial bin over 19.6 Gyr. The initial NFW cusp at r < 0.1 kpc flattens within 1 Gyr due to SIDM heat transfer. After ~15 Gyr, particles accumulate rapidly in the center as gravothermal collapse begins, forming a sharp density spike.</sup></sub></td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="33%"><img src="img/Fig2_Particle_Count_Evolution.png" alt="Particle Count" style="width:100%;"></td>
+<td width="33%"><img src="img/Fig1_Density_Evolution.png" alt="Density Evolution" style="width:100%;"></td>
+<td width="33%"><img src="img/Fig3_Radial_Velocity_Dispersion.png" alt="Velocity Dispersion" style="width:100%;"></td>
+</tr>
+<tr>
+<td class="justify"><sub><sup><b>Core Particle Accumulation:</b> Time evolution of the number of particles in the innermost 0.02 kpc (blue) and 0.2 kpc (green). The number within 0.02 kpc is scaled up by 15. The number of particles quickly decreases from its initial value then slowly increases until about t=16 Gyr, with a sharper increase in the innermost regions. The decrease after 16.5 Gyr is a numerical artifact from finite time resolution.</sup></sub></td>
+<td class="justify"><sub><sup><b>Density Profile Evolution:</b> Time evolution of the inner density profile for a 1.15×10<sup>9</sup> M<sub>⊙</sub> NFW halo with scale radius r<sub>s</sub>=1.18 kpc and SIDM cross section 50 cm²/g. The initial profile (black) has an r<sup>-1</sup> power law at r≲1 kpc, which flattens by t=1 Gyr (red). Steepening from gravothermal instability appears at t≈15 Gyr (green), with further steepening at t=16.5 Gyr (blue).</sup></sub></td>
+<td class="justify"><sub><sup><b>Velocity Dispersion Evolution:</b> Time evolution of the radial velocity dispersion in the inner 0.2 kpc. In the first Gyr the initially cold population in the NFW profile is rapidly heated towards isothermality, and the dispersion then diverges as the core forms 16 Gyr later. The sharp rise after 15 Gyr indicates the onset of core collapse.</sup></sub></td>
+</tr>
+</table>
+
+<p class="center">Please see <a href="https://arxiv.org/abs/2506.04334">arXiv:2506.04334</a> for further details.</p>
+
+</body>
+</html>

@@ -1,0 +1,419 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuadSort (quadsort.c / quadsort.h) &mdash; NSphere  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python API Reference" href="../python_api/index.html" />
+    <link rel="prev" title="NSphere Sort (nsphere_sort.h)" href="nsphere_sort.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            NSphere
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../command_line/index.html">Command-Line Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_flow/index.html">Data and Results Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_flow/index.html#output-file-reference">Output File Reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">C API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="nsphere_core.html">NSphere Core (nsphere.c)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nsphere_sort.html">NSphere Sort (nsphere_sort.h)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">QuadSort (<cite>quadsort.c</cite> / <cite>quadsort.h</cite>)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c.branchless_swap"><code class="docutils literal notranslate"><span class="pre">branchless_swap</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.cmp"><code class="docutils literal notranslate"><span class="pre">cmp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.FUNC"><code class="docutils literal notranslate"><span class="pre">FUNC</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.head_branchless_merge"><code class="docutils literal notranslate"><span class="pre">head_branchless_merge</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.parity_merge_four"><code class="docutils literal notranslate"><span class="pre">parity_merge_four</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.parity_merge_two"><code class="docutils literal notranslate"><span class="pre">parity_merge_two</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.QUAD_CACHE"><code class="docutils literal notranslate"><span class="pre">QUAD_CACHE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.swap_branchless"><code class="docutils literal notranslate"><span class="pre">swap_branchless</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.tail_branchless_merge"><code class="docutils literal notranslate"><span class="pre">tail_branchless_merge</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c.VAR"><code class="docutils literal notranslate"><span class="pre">VAR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv47CMPFUNC"><code class="docutils literal notranslate"><span class="pre">CMPFUNC</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv48quadsortPv6size_t6size_tP7CMPFUNC"><code class="docutils literal notranslate"><span class="pre">quadsort()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv413quadsort_primPv6size_t6size_t"><code class="docutils literal notranslate"><span class="pre">quadsort_prim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv413quadsort_sizePv6size_t6size_tP7CMPFUNC"><code class="docutils literal notranslate"><span class="pre">quadsort_size()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../python_api/index.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">NSphere</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">C API Reference</a></li>
+      <li class="breadcrumb-item active">QuadSort (<cite>quadsort.c</cite> / <cite>quadsort.h</cite>)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/c_api/quadsort.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quadsort-quadsort-c-quadsort-h">
+<h1>QuadSort (<cite>quadsort.c</cite> / <cite>quadsort.h</cite>)<a class="headerlink" href="#quadsort-quadsort-c-quadsort-h" title="Link to this heading"></a></h1>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1af0762f96d6be7411a0682f05566b1b5e"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">cross_merge</span> <span class="pre">(VAR</span> <span class="pre">*dest,</span> <span class="pre">VAR</span> <span class="pre">*from,</span> <span class="pre">size_t</span> <span class="pre">left,</span> <span class="pre">size_t</span> <span class="pre">right,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1afb437edcda9e31ec48ea7dfe4dc58dad"></span><span class="sig-name descname"><span class="pre">size_t</span> <span class="pre">FUNC</span> <span class="pre">monobound_binary_first</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*value,</span> <span class="pre">size_t</span> <span class="pre">top,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1aa0f55e042cf55de1688cca76bfd2c726"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">parity_merge</span> <span class="pre">(VAR</span> <span class="pre">*dest,</span> <span class="pre">VAR</span> <span class="pre">*from,</span> <span class="pre">size_t</span> <span class="pre">left,</span> <span class="pre">size_t</span> <span class="pre">right,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a1683bfdb842747e1bb86954d56105e1e"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">parity_swap_five</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1aaf6c489ad646fbb126bd2e10aed622de"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">parity_swap_four</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a56a1a35259060fa0aceb88958bfa62fb"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">parity_swap_seven</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a906d34112af90f28fde25d1a77998eea"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">parity_swap_six</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1ab74e338b9f7ec2be8dff9c76eeff6593"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">partial_backward_merge</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">size_t</span> <span class="pre">block,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a86733ffd7b99bed2e8807c39a886693f"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">partial_forward_merge</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">size_t</span> <span class="pre">block,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a04cd7859b65748d27888fdcb81496193"></span><span class="sig-name descname"><span class="pre">size_t</span> <span class="pre">FUNC</span> <span class="pre">quad_merge</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">size_t</span> <span class="pre">block,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a3c00a182a5eb686b363925d9606aefaf"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">quad_merge_block</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">block,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a1e140347950c804d563970e013c53c09"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">quad_reversal</span> <span class="pre">(VAR</span> <span class="pre">*pta,</span> <span class="pre">VAR</span> <span class="pre">*ptz)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a7847a941c08687d04250e1c8b888d676"></span><span class="sig-name descname"><span class="pre">size_t</span> <span class="pre">FUNC</span> <span class="pre">quad_swap</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a4df18ce4001175200456119338102bb4"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">quad_swap_merge</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1aa5334589d2edfc8333aa1bbcc21c5d6d"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">quadsort</span> <span class="pre">(void</span> <span class="pre">*array,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a66aa00e2f61089472e3a4048b49677b1"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">quadsort_swap</span> <span class="pre">(void</span> <span class="pre">*array,</span> <span class="pre">void</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1aed11ea4bc07147c788f84d3c925e448c"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">rotate_merge</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">size_t</span> <span class="pre">block,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a3d7112c345cdface000842be8a7f7db6"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">rotate_merge_block</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">lblock,</span> <span class="pre">size_t</span> <span class="pre">right,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a1faf9fe60029c9b35829380246a7c9c0"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">tail_merge</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">size_t</span> <span class="pre">block,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a308506295c7d8da06a51992de19e6f09"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">tail_swap</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a8de75cfb88b7fd4188f2519d7f06acda"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">tiny_sort</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">CMPFUNC</span> <span class="pre">*cmp)</span></span></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8c_1a717c9e5080a87f50bc798d4a7a81050e"></span><span class="sig-name descname"><span class="pre">void</span> <span class="pre">FUNC</span> <span class="pre">trinity_rotation</span> <span class="pre">(VAR</span> <span class="pre">*array,</span> <span class="pre">VAR</span> <span class="pre">*swap,</span> <span class="pre">size_t</span> <span class="pre">swap_size,</span> <span class="pre">size_t</span> <span class="pre">nmemb,</span> <span class="pre">size_t</span> <span class="pre">left)</span></span></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-defines">Defines</p>
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.branchless_swap">
+<span class="target" id="quadsort_8h_1a2e149c1034b17cf86ed6aa380edbcb96"></span><span class="sig-name descname"><span class="n"><span class="pre">branchless_swap</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">pta</span></span>, <span class="n"><span class="pre">swap</span></span>, <span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.branchless_swap" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.cmp">
+<span class="target" id="quadsort_8h_1a795a8d54876a4363815217ccbf17e2e1"></span><span class="sig-name descname"><span class="n"><span class="pre">cmp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.cmp" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a795a8d54876a4363815217ccbf17e2e1"></span><span class="sig-name descname"><span class="n"><span class="pre">cmp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a795a8d54876a4363815217ccbf17e2e1"></span><span class="sig-name descname"><span class="n"><span class="pre">cmp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a795a8d54876a4363815217ccbf17e2e1"></span><span class="sig-name descname"><span class="n"><span class="pre">cmp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">a</span></span>, <span class="n"><span class="pre">b</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.FUNC">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.FUNC" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a03e0ba20d5ba7c302cc74a126d4c805b"></span><span class="sig-name descname"><span class="n"><span class="pre">FUNC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.head_branchless_merge">
+<span class="target" id="quadsort_8h_1ab6a4ef28dc5a924a56ee49f610f60578"></span><span class="sig-name descname"><span class="n"><span class="pre">head_branchless_merge</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ptd</span></span>, <span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">ptl</span></span>, <span class="n"><span class="pre">ptr</span></span>, <span class="n"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.head_branchless_merge" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.parity_merge_four">
+<span class="target" id="quadsort_8h_1ae3a40694defd9ba8c8bd0b1bf9f47f59"></span><span class="sig-name descname"><span class="n"><span class="pre">parity_merge_four</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">array</span></span>, <span class="n"><span class="pre">swap</span></span>, <span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">ptl</span></span>, <span class="n"><span class="pre">ptr</span></span>, <span class="n"><span class="pre">pts</span></span>, <span class="n"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.parity_merge_four" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.parity_merge_two">
+<span class="target" id="quadsort_8h_1aa6068467d1b678d3fc4daf57cd643d0e"></span><span class="sig-name descname"><span class="n"><span class="pre">parity_merge_two</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">array</span></span>, <span class="n"><span class="pre">swap</span></span>, <span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">ptl</span></span>, <span class="n"><span class="pre">ptr</span></span>, <span class="n"><span class="pre">pts</span></span>, <span class="n"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.parity_merge_two" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.QUAD_CACHE">
+<span class="target" id="quadsort_8h_1a5e74d02deddf7e39e4e23bd350a50773"></span><span class="sig-name descname"><span class="n"><span class="pre">QUAD_CACHE</span></span></span><a class="headerlink" href="#c.QUAD_CACHE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1a5e74d02deddf7e39e4e23bd350a50773"></span><span class="sig-name descname"><span class="n"><span class="pre">QUAD_CACHE</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.swap_branchless">
+<span class="target" id="quadsort_8h_1aaa3a20d3df36aa27c32d87e9b3ae91da"></span><span class="sig-name descname"><span class="n"><span class="pre">swap_branchless</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">pta</span></span>, <span class="n"><span class="pre">swap</span></span>, <span class="n"><span class="pre">x</span></span>, <span class="n"><span class="pre">y</span></span>, <span class="n"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.swap_branchless" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.tail_branchless_merge">
+<span class="target" id="quadsort_8h_1ac93a172d9b80327b049c81a45ff6325d"></span><span class="sig-name descname"><span class="n"><span class="pre">tail_branchless_merge</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tpd</span></span>, <span class="n"><span class="pre">y</span></span>, <span class="n"><span class="pre">tpl</span></span>, <span class="n"><span class="pre">tpr</span></span>, <span class="n"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.tail_branchless_merge" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.VAR">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><a class="headerlink" href="#c.VAR" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp">
+<span class="target" id="quadsort_8h_1abca8dfa78652bc61165262af4fade766"></span><span class="sig-name descname"><span class="n"><span class="pre">VAR</span></span></span><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-typedefs">Typedefs</p>
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv47CMPFUNC">
+<span class="target" id="quadsort_8h_1ac0b079b59789af14bcd472eacba7bf45"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">CMPFUNC</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">a</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv47CMPFUNC" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv48quadsortPv6size_t6size_tP7CMPFUNC">
+<span class="target" id="quadsort_8h_1a88f1effb04be822e96af463ae2d7d14e"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">quadsort</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">array</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nmemb</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span>, <a class="reference internal" href="#_CPPv47CMPFUNC" title="CMPFUNC"><span class="n"><span class="pre">CMPFUNC</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv48quadsortPv6size_t6size_tP7CMPFUNC" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv413quadsort_primPv6size_t6size_t">
+<span class="target" id="quadsort_8h_1ae826b3391cde8bae02bd83c1e551ab60"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">quadsort_prim</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">array</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nmemb</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv413quadsort_primPv6size_t6size_t" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv413quadsort_sizePv6size_t6size_tP7CMPFUNC">
+<span class="target" id="quadsort_8h_1a4d8d3d5451af089533bb46bbbdf5630b"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">quadsort_size</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">array</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nmemb</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span>, <a class="reference internal" href="#_CPPv47CMPFUNC" title="CMPFUNC"><span class="n"><span class="pre">CMPFUNC</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">cmp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv413quadsort_sizePv6size_t6size_tP7CMPFUNC" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nsphere_sort.html" class="btn btn-neutral float-left" title="NSphere Sort (nsphere_sort.h)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../python_api/index.html" class="btn btn-neutral float-right" title="Python API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Kris Sigurdson.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Examples" href="../examples/index.html" />
-    <link rel="prev" title="C API Reference" href="../c_api/index.html" /> 
+    <link rel="prev" title="QuadSort (quadsort.c / quadsort.h)" href="../c_api/quadsort.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,6 +47,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../command_line/index.html">Command-Line Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../data_flow/index.html">Data and Results Flow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data_flow/index.html#output-file-reference">Output File Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../c_api/index.html">C API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Python API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#nsphere-plot-nsphere-plot-py">NSphere Plot (<cite>nsphere_plot.py</cite>)</a><ul>
@@ -107,6 +108,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.plot_particles_histograms"><code class="docutils literal notranslate"><span class="pre">plot_particles_histograms()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.plot_psi"><code class="docutils literal notranslate"><span class="pre">plot_psi()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.plot_single_trajectory"><code class="docutils literal notranslate"><span class="pre">plot_single_trajectory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.plot_tangential_velocity_histogram"><code class="docutils literal notranslate"><span class="pre">plot_tangential_velocity_histogram()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.plot_total_energy_diagnostics"><code class="docutils literal notranslate"><span class="pre">plot_total_energy_diagnostics()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.plot_trajectories"><code class="docutils literal notranslate"><span class="pre">plot_trajectories()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.preprocess_phase_space_file"><code class="docutils literal notranslate"><span class="pre">preprocess_phase_space_file()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#nsphere_plot.print_footer"><code class="docutils literal notranslate"><span class="pre">print_footer()</span></code></a></li>
@@ -198,7 +201,7 @@ This reduces the reliance on global variables and improves code maintainability 
 <dd><p>Initialize the configuration with command line arguments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> (<em>argparse.Namespace</em><em>, </em><em>optional</em>) – The parsed command line arguments.
+<dd class="field-odd"><p><strong>args</strong> (<em>argparse.Namespace</em><em>, </em><em>optional</em>) -- The parsed command line arguments.
 If None, arguments will be parsed from sys.argv.</p>
 </dd>
 </dl>
@@ -219,8 +222,8 @@ False if they can be skipped based on user-selected visualization options.</p>
 </dl>
 <p class="rubric">Notes</p>
 <p>Rank files are needed for animations and energy plots. This method checks
-if either of these visualization types are specifically requested (via “only” flags)
-or if they haven’t been explicitly excluded (via “no-” flags) in normal mode.</p>
+if either of these visualization types are specifically requested (via &quot;only&quot; flags)
+or if they haven't been explicitly excluded (via &quot;no-&quot; flags) in normal mode.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -229,7 +232,7 @@ or if they haven’t been explicitly excluded (via “no-” flags) in normal mo
 <dd><p>Determine if the user requested specific visualization types only.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True if any “only” flag is specified (e.g., –phase-space, –profile-plots),
+<dd class="field-odd"><p>True if any &quot;only&quot; flag is specified (e.g., --phase-space, --profile-plots),
 False if running in normal mode where all visualizations are generated.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -237,28 +240,15 @@ False if running in normal mode where all visualizations are generated.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>When “only” flags are active, the script will generate only those specific
-visualization types and skip all others, regardless of –no-* flags.</p>
+<p>When &quot;only&quot; flags are active, the script will generate only those specific
+visualization types and skip all others, regardless of --no-* flags.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="nsphere_plot.Configuration.setup_file_paths">
 <span class="sig-name descname"><span class="pre">setup_file_paths</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#Configuration.setup_file_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.Configuration.setup_file_paths" title="Link to this definition"></a></dt>
-<dd><p>Generate a dictionary mapping file types to their full file paths.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Dictionary where keys are file type identifiers (e.g., “particles”,
-“density_profile”) and values are the corresponding file paths with
-the configured suffix.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>This method constructs paths for all possible data files that might be
-used in the visualization process. The actual existence of these files
-is checked later when they are accessed.</p>
+<dd><p>Generate a dictionary mapping file types to their full file paths.
+All filenames now correctly include the suffix.</p>
 </dd></dl>
 
 </dd></dl>
@@ -284,7 +274,7 @@ This ensures consistent scaling in animations.</p>
 <dd><p>Calculate an appropriate maximum value for colorbar scaling based on histogram data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>H</strong> (<em>ndarray</em>) – The 2D histogram data array.</p>
+<dd class="field-odd"><p><strong>H</strong> (<em>ndarray</em>) -- The 2D histogram data array.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A reasonable maximum value for the colorbar, based on the 99.5th percentile
@@ -310,13 +300,15 @@ This is more reliable than printing spaces across different terminal widths.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.create_density_animation">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">create_density_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#create_density_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.create_density_animation" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">create_density_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#create_density_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.create_density_animation" title="Link to this definition"></a></dt>
 <dd><p>Create density profile animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>duration</strong> (<em>float</em>) – Duration of each frame in milliseconds.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) -- Duration of each frame in milliseconds.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a><em>, </em><em>optional</em>) -- Configuration object containing plot settings. If provided,
+enables robust dynamic ranging for axes.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -335,13 +327,15 @@ Requires imageio v2 (<cite>pip install imageio==2.*</cite>).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.create_mass_animation">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">create_mass_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#create_mass_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.create_mass_animation" title="Link to this definition"></a></dt>
-<dd><p>Create mass profile animation.</p>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">create_mass_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#create_mass_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.create_mass_animation" title="Link to this definition"></a></dt>
+<dd><p>Create mass profile animation with optional robust ranging.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>duration</strong> (<em>float</em>) – Duration of each frame in milliseconds.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) -- Duration of each frame in milliseconds.</p></li>
+<li><p><strong>config</strong> (<em>object</em><em>, </em><em>optional</em>) -- Configuration object containing plot settings. If provided and has
+use_median_ranges=True, will use robust ranging for axes.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -355,18 +349,22 @@ Requires imageio v2 (<cite>pip install imageio==2.*</cite>).</p>
 <p>Uses parallel processing for rendering animation frames.
 Saves the animation incrementally using <cite>imageio.get_writer</cite> to reduce
 peak memory usage compared to collecting all frames first.
-Requires imageio v2 (<cite>pip install imageio==2.*</cite>).</p>
+Requires imageio v2 (<cite>pip install imageio==2.*</cite>).
+With robust ranging enabled, calculates data-driven axis limits based
+on the median of the data distribution.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.create_psi_animation">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">create_psi_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#create_psi_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.create_psi_animation" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">create_psi_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#create_psi_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.create_psi_animation" title="Link to this definition"></a></dt>
 <dd><p>Create psi profile animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>duration</strong> (<em>float</em>) – Duration of each frame in milliseconds.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) -- Duration of each frame in milliseconds.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a><em>, </em><em>optional</em>) -- Configuration object containing plot settings. If provided,
+enables robust dynamic ranging for axes.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -389,7 +387,7 @@ Requires imageio v2 (<cite>pip install imageio==2.*</cite>).</p>
 <dd><p>Prints the execution banner and summarizes the configuration parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) – The configuration object containing parsed arguments and settings.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) -- The configuration object containing parsed arguments and settings.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -409,7 +407,7 @@ remains visible even if the program terminates unexpectedly.</p>
 <dd><p>Filter out rows containing NaN or Inf values across multiple arrays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>*arrs</strong> (<em>array-like</em>) – Variable number of arrays to filter. All must have the same length.</p>
+<dd class="field-odd"><p><strong>*arrs</strong> (<em>array-like</em>) -- Variable number of arrays to filter. All must have the same length.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>New arrays with invalid rows removed from all input arrays.</p>
@@ -436,19 +434,21 @@ All arrays must have the same length for proper row-wise filtering.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>The project root is identified by the presence of a ‘src’ directory.
+<p>The project root is identified by the presence of a 'src' directory.
 Uses path normalization for cross-platform compatibility.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.generate_all_1D_animations">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_all_1D_animations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_all_1D_animations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_all_1D_animations" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_all_1D_animations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_all_1D_animations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_all_1D_animations" title="Link to this definition"></a></dt>
 <dd><p>Generate all three 1D profile animations (mass, density, psi) with optimized parallel processing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>duration</strong> (<em>float</em>) – Duration of each frame in milliseconds.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) -- Duration of each frame in milliseconds.</p></li>
+<li><p><strong>config</strong> (<em>object</em><em>, </em><em>optional</em>) -- Configuration object containing plot settings. If provided and has
+use_median_ranges=True, will use robust ranging for axes.</p></li>
 </ul>
 </dd>
 </dl>
@@ -465,8 +465,8 @@ frames. This gets the best performance while maintaining readable output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) – The configuration object.</p></li>
-<li><p><strong>rank_decimated_data</strong> (<em>list</em><em> or </em><em>None</em>) – Pre-processed rank data that can be used as fallback for histogram generation.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) -- The configuration object.</p></li>
+<li><p><strong>rank_decimated_data</strong> (<em>list</em><em> or </em><em>None</em>) -- Pre-processed rank data that can be used as fallback for histogram generation.</p></li>
 </ul>
 </dd>
 </dl>
@@ -481,9 +481,9 @@ energy plots), and updates the console output with completion status.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) – The configuration object containing suffix and other settings.</p></li>
-<li><p><strong>file_paths</strong> (<em>dict</em><em> or </em><em>None</em>) – Dictionary of file paths, will be created if None.</p></li>
-<li><p><strong>unsorted_energy_data</strong> (<em>list</em><em> or </em><em>None</em>) – Pre-processed unsorted energy data from process_rank_files.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) -- The configuration object containing suffix and other settings.</p></li>
+<li><p><strong>file_paths</strong> (<em>dict</em><em> or </em><em>None</em>) -- Dictionary of file paths, will be created if None.</p></li>
+<li><p><strong>unsorted_energy_data</strong> (<em>list</em><em> or </em><em>None</em>) -- Pre-processed unsorted energy data from process_rank_files.</p></li>
 </ul>
 </dd>
 </dl>
@@ -496,8 +496,16 @@ overwriting the status lines upon completion.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.generate_comparison_plot">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_comparison_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_comparison_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_comparison_plot" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_comparison_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_comparison_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_comparison_plot" title="Link to this definition"></a></dt>
 <dd><p>Creates a side-by-side comparison of the initial and last available snapshot phase space histograms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for file naming</p></li>
+<li><p><strong>config</strong> (<em>dict</em><em>, </em><em>optional</em>) -- Configuration dictionary with plot settings</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -506,27 +514,35 @@ overwriting the status lines upon completion.</p>
 <dd><p>Generate all convergence test plots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p>
+<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.generate_initial_phase_histogram">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_initial_phase_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_initial_phase_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_initial_phase_histogram" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_initial_phase_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_initial_phase_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_initial_phase_histogram" title="Link to this definition"></a></dt>
 <dd><p>Creates a phase space histogram from the initial particles.dat file.
 This represents the true initial distribution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for file naming</p></li>
+<li><p><strong>config</strong> (<em>dict</em><em>, </em><em>optional</em>) -- Configuration dictionary with plot settings</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.generate_phase_space_animation">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_phase_space_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_phase_space_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_phase_space_animation" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_phase_space_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_phase_space_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_phase_space_animation" title="Link to this definition"></a></dt>
 <dd><p>Creates an animation showing the evolution of the phase space distribution over time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>fps</strong> (<em>int</em><em>, </em><em>optional</em>) – Frames per second for the animation, by default 10.</p></li>
+<li><p><strong>config</strong> (<em>object</em>) -- Configuration object containing suffix and plot settings.</p></li>
+<li><p><strong>fps</strong> (<em>int</em><em>, </em><em>optional</em>) -- Frames per second for the animation, by default 10.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -545,15 +561,16 @@ Requires imageio v2 (<cite>pip install imageio==2.*</cite>).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.generate_rank_histogram">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_rank_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank_decimated_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_rank_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_rank_histogram" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">generate_rank_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank_decimated_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#generate_rank_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.generate_rank_histogram" title="Link to this definition"></a></dt>
 <dd><p>Generate 2D histogram from rank data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>rank_decimated_data</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – Processed rank data, either as a list of (snap, data) tuples
+<li><p><strong>rank_decimated_data</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) -- Processed rank data, either as a list of (snap, data) tuples
 or as a single data array for a specific snapshot.</p></li>
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Custom output file path. If None, a default path will be used.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Custom output file path. If None, a default path will be used.</p></li>
+<li><p><strong>config</strong> (<em>dict</em><em>, </em><em>optional</em>) -- Configuration dictionary with plot settings</p></li>
 </ul>
 </dd>
 </dl>
@@ -569,7 +586,7 @@ Processes results iteratively to build the final matrix, avoiding
 intermediate data accumulation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p>
+<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Path to the generated plot file, or None if no plot was generated.</p>
@@ -592,8 +609,8 @@ intermediate data accumulation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>unsorted_energy_list</strong> (<em>list</em>) – Pre-processed unsorted energy data.</p></li>
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
+<li><p><strong>unsorted_energy_list</strong> (<em>list</em>) -- Pre-processed unsorted energy data.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -611,7 +628,7 @@ intermediate data accumulation.</p>
 <dd><p>Extract the filename prefix without path, extension or suffix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Full path or filename to process</p>
+<dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) -- Full path or filename to process</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The extracted filename prefix</p>
@@ -657,12 +674,12 @@ using the psutil library to access system resource information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>char</strong> (<em>str</em><em>, </em><em>optional</em>) – The character to repeat for the line, by default ‘-‘.</p></li>
-<li><p><strong>fallback_width</strong> (<em>int</em><em>, </em><em>optional</em>) – The width to use if terminal size can’t be determined, by default 100.</p></li>
+<li><p><strong>char</strong> (<em>str</em><em>, </em><em>optional</em>) -- The character to repeat for the line, by default '-'.</p></li>
+<li><p><strong>fallback_width</strong> (<em>int</em><em>, </em><em>optional</em>) -- The width to use if terminal size can't be determined, by default 100.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A string consisting of ‘char’ repeated to fill the terminal width.</p>
+<dd class="field-even"><p>A string consisting of 'char' repeated to fill the terminal width.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -677,8 +694,8 @@ using the psutil library to access system resource information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Filename to extract snapshot number from</p></li>
-<li><p><strong>pattern</strong> (<em>re.Pattern</em><em>, </em><em>optional</em>) – Compiled regex pattern to use. If None, defaults to Rank_Mass_Rad_VRad_sorted_t pattern.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Filename to extract snapshot number from</p></li>
+<li><p><strong>pattern</strong> (<em>re.Pattern</em><em>, </em><em>optional</em>) -- Compiled regex pattern to use. If None, defaults to Rank_Mass_Rad_VRad_sorted_t pattern.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -690,7 +707,7 @@ using the psutil library to access system resource information.</p>
 </dl>
 <p class="rubric">Notes</p>
 <p>Uses regular expression matching to extract the snapshot number from filenames
-that follow a pattern like “Rank_Mass_Rad_VRad_sorted_t00012”. Returns a large
+that follow a pattern like &quot;Rank_Mass_Rad_VRad_sorted_t00012&quot;. Returns a large
 value for non-matching files to ensure they sort after valid snapshot files.</p>
 </dd></dl>
 
@@ -709,13 +726,13 @@ value for non-matching files to ensure they sort after valid snapshot files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the file to read</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) – Data type to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the file to read</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) -- Data type to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Array containing the data successfully read from the file, or None if
-the file doesn’t exist or contains no valid data</p>
+the file doesn't exist or contains no valid data</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray or None</p>
@@ -735,13 +752,13 @@ for handling files that might be incomplete or partially written.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the file to read</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) – Data type to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the file to read</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) -- Data type to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Array containing the data from the first 10 lines of the file,
-or None if the file doesn’t exist or contains no valid data</p>
+or None if the file doesn't exist or contains no valid data</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray or None</p>
@@ -760,9 +777,9 @@ lines that contain valid data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the binary file to read</p></li>
-<li><p><strong>ncols</strong> (<em>int</em>) – Number of columns expected in the data</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Data type(s) to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the binary file to read</p></li>
+<li><p><strong>ncols</strong> (<em>int</em>) -- Number of columns expected in the data</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) -- Data type(s) to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -779,7 +796,7 @@ is missing or contains no valid data</p>
 <li><p>Single dtype (e.g., np.float32):
 Returns array of shape (N, ncols)</p></li>
 <li><p>List/tuple of dtypes:
-Returns structured array with fields named ‘f0’, ‘f1’, …, ‘f{ncols-1}’,
+Returns structured array with fields named 'f0', 'f1', ..., 'f{ncols-1}',
 each with its corresponding dtype from the list</p></li>
 </ol>
 <p>Uses align=False to ensure tight packing of structured arrays.
@@ -795,17 +812,17 @@ only necessary data pages from disk into memory when columns are accessed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the binary file.</p></li>
-<li><p><strong>ncols_total</strong> (<em>int</em>) – Total number of columns (fields) in each row of the file.</p></li>
-<li><p><strong>cols_to_load</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – List of 0-based column indices to load and return.</p></li>
-<li><p><strong>dtype_list</strong> (<em>list</em>) – List of numpy dtypes corresponding to <em>all</em> columns in the file,
-in order. E.g., [np.int32, np.float32, np.float32, …].</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the binary file.</p></li>
+<li><p><strong>ncols_total</strong> (<em>int</em>) -- Total number of columns (fields) in each row of the file.</p></li>
+<li><p><strong>cols_to_load</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) -- List of 0-based column indices to load and return.</p></li>
+<li><p><strong>dtype_list</strong> (<em>list</em>) -- List of numpy dtypes corresponding to <em>all</em> columns in the file,
+in order. E.g., [np.int32, np.float32, np.float32, ...].</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A list containing 1D numpy arrays (as float32) for each requested
 column, filtered for finite values based on the loaded columns.
-Returns None if the file doesn’t exist, cannot be mapped,
+Returns None if the file doesn't exist, cannot be mapped,
 or contains no valid data in requested columns.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -825,14 +842,14 @@ Returned arrays are converted to float32 for consistency.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>message</strong> (<em>str</em>) – The message to log</p></li>
-<li><p><strong>level</strong> (<em>str</em><em>, </em><em>optional</em>) – The log level (info, warning, error, debug), by default “info”</p></li>
+<li><p><strong>message</strong> (<em>str</em>) -- The message to log</p></li>
+<li><p><strong>level</strong> (<em>str</em><em>, </em><em>optional</em>) -- The log level (info, warning, error, debug), by default &quot;info&quot;</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
 <p>Warning and error messages are always logged regardless of enable_logging flag.
-Info and debug messages are only logged if enable_logging is True (–log specified).</p>
+Info and debug messages are only logged if enable_logging is True (--log specified).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -842,10 +859,10 @@ Info and debug messages are only logged if enable_logging is True (–log specif
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>output_file</strong> (<em>str</em>) – Full path to the saved file</p></li>
-<li><p><strong>current</strong> (<em>int</em><em>, </em><em>optional</em>) – Current plot number, by default 0</p></li>
-<li><p><strong>total</strong> (<em>int</em><em>, </em><em>optional</em>) – Total plots to save, by default 1</p></li>
-<li><p><strong>section_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of plots being saved, by default “plots”</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Full path to the saved file</p></li>
+<li><p><strong>current</strong> (<em>int</em><em>, </em><em>optional</em>) -- Current plot number, by default 0</p></li>
+<li><p><strong>total</strong> (<em>int</em><em>, </em><em>optional</em>) -- Total plots to save, by default 1</p></li>
+<li><p><strong>section_type</strong> (<em>str</em><em>, </em><em>optional</em>) -- Type of plots being saved, by default &quot;plots&quot;</p></li>
 </ul>
 </dd>
 </dl>
@@ -883,11 +900,11 @@ processed to calculate a reasonable rate.</p>
 data types and safe loader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – The filename of the sorted Rank file to process.</p>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) -- The filename of the sorted Rank file to process.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>(snapshot_number, data) if successful, otherwise None.
-‘data’ is a structured numpy array containing the file contents.</p>
+'data' is a structured numpy array containing the file contents.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple or None</p>
@@ -902,8 +919,8 @@ data types and safe loader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em>) – Path to the input data file containing angular momentum data.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Path to save the output plot.</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the input data file containing angular momentum data.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to save the output plot.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -922,13 +939,15 @@ Loads full data.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_combined_histogram_from_file">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_combined_histogram_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_combined_histogram_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_combined_histogram_from_file" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_combined_histogram_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_combined_histogram_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_combined_histogram_from_file" title="Link to this definition"></a></dt>
 <dd><p>Create an overlay histogram comparing initial and final radial distributions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em>) – Path to the input data file containing combined histogram data</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Path to save the output plot</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the input data file containing combined histogram data</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to save the output plot</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a><em>, </em><em>optional</em>) -- Configuration object containing plot settings. If provided,
+enables robust dynamic ranging for axes.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -958,14 +977,14 @@ remained stable and which parts changed during the simulation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Nint_arr</strong> (<em>list</em>) – List of integration parameter values.</p></li>
-<li><p><strong>Nspl_arr</strong> (<em>list</em>) – List of spline parameter values.</p></li>
-<li><p><strong>basefile</strong> (<em>str</em>) – Base filename to use.</p></li>
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>xlabel</strong> (<em>str</em>) – X-axis label (already formatted LaTeX string).</p></li>
-<li><p><strong>ylabel</strong> (<em>str</em>) – Y-axis label (already formatted LaTeX string).</p></li>
-<li><p><strong>title</strong> (<em>str</em>) – Plot title (already formatted LaTeX string).</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Output file path.</p></li>
+<li><p><strong>Nint_arr</strong> (<em>list</em>) -- List of integration parameter values.</p></li>
+<li><p><strong>Nspl_arr</strong> (<em>list</em>) -- List of spline parameter values.</p></li>
+<li><p><strong>basefile</strong> (<em>str</em>) -- Base filename to use.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>xlabel</strong> (<em>str</em>) -- X-axis label (already formatted LaTeX string).</p></li>
+<li><p><strong>ylabel</strong> (<em>str</em>) -- Y-axis label (already formatted LaTeX string).</p></li>
+<li><p><strong>title</strong> (<em>str</em>) -- Plot title (already formatted LaTeX string).</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Output file path.</p></li>
 </ul>
 </dd>
 </dl>
@@ -978,8 +997,8 @@ remained stable and which parts changed during the simulation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em>) – Path to the input data file containing energy comparison data.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot. Default is “results/energy_compare.png”.</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the input data file containing energy comparison data.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot. Default is &quot;results/energy_compare.png&quot;.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1013,14 +1032,14 @@ remained stable and which parts changed during the simulation.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_density">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'density_profile.png'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_density" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_density" title="Link to this definition"></a></dt>
 <dd><p>Plot density profile as a function of radius and save to file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>r_values</strong> (<em>array-like</em>) – Radius values in kpc</p></li>
-<li><p><strong>rho_values</strong> (<em>array-like</em>) – Density values (rho) at each radius</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “density_profile.png”</p></li>
+<li><p><strong>r_values</strong> (<em>array-like</em>) -- Radius values in kpc</p></li>
+<li><p><strong>rho_values</strong> (<em>array-like</em>) -- Density values (rho) at each radius</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;density_profile.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1043,10 +1062,10 @@ appropriate labels and grid.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>v_values</strong> (<em>array-like</em>) – Velocity values</p></li>
-<li><p><strong>df_values</strong> (<em>array-like</em>) – Distribution function values</p></li>
-<li><p><strong>r_fixed</strong> (<em>float</em>) – The fixed radius value in kpc</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “df_fixed_radius.png”</p></li>
+<li><p><strong>v_values</strong> (<em>array-like</em>) -- Velocity values</p></li>
+<li><p><strong>df_values</strong> (<em>array-like</em>) -- Distribution function values</p></li>
+<li><p><strong>r_fixed</strong> (<em>float</em><em> or </em><em>str</em>) -- The fixed radius value in kpc, or a string like &quot;2r_s&quot; for r_F = 2×scale_radius</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;df_fixed_radius.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1069,9 +1088,9 @@ fixed radius as a function of velocity.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>r_values</strong> (<em>array-like</em>) – Radius values in kpc</p></li>
-<li><p><strong>dpsi_values</strong> (<em>array-like</em>) – Gravitational acceleration values at each radius</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “dpsi_dr.png”</p></li>
+<li><p><strong>r_values</strong> (<em>array-like</em>) -- Radius values in kpc</p></li>
+<li><p><strong>dpsi_values</strong> (<em>array-like</em>) -- Gravitational acceleration values at each radius</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;dpsi_dr.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1095,9 +1114,9 @@ Units of dPsi/dr are typically (km/s)^2 / kpc.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>psi_values</strong> (<em>array-like</em>) – Gravitational potential values (in km^2/s^2)</p></li>
-<li><p><strong>drho_dpsi</strong> (<em>array-like</em>) – Derivative of density with respect to potential</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “drho_dpsi.png”</p></li>
+<li><p><strong>psi_values</strong> (<em>array-like</em>) -- Gravitational potential values (in km^2/s^2)</p></li>
+<li><p><strong>drho_dpsi</strong> (<em>array-like</em>) -- Derivative of density with respect to potential</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;drho_dpsi.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1117,12 +1136,12 @@ gravitational potential with appropriate labels and grid.</p>
 <dt class="sig sig-object py" id="nsphere_plot.plot_energy_time">
 <span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_energy_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_energy_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_energy_time" title="Link to this definition"></a></dt>
 <dd><p>Plot energy vs. time for multiple particles, illustrating integration stability.
-NOTE: ‘Current’ energy uses the initial static potential for evaluation.</p>
+NOTE: 'Current' energy uses the initial static potential for evaluation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em>) – Path to the input data file containing energy data.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Path to save the output plot.</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the input data file containing energy data.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to save the output plot.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1145,9 +1164,9 @@ for each particle. Loads full data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>E_values</strong> (<em>array-like</em>) – Energy values</p></li>
-<li><p><strong>f_values</strong> (<em>array-like</em>) – Distribution function values at each energy</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “f_of_E.png”</p></li>
+<li><p><strong>E_values</strong> (<em>array-like</em>) -- Energy values</p></li>
+<li><p><strong>f_values</strong> (<em>array-like</em>) -- Distribution function values at each energy</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;f_of_E.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1160,19 +1179,21 @@ for each particle. Loads full data.</p>
 <p class="rubric">Notes</p>
 <p>Filters out any non-finite values before plotting.
 Creates a figure showing the distribution function (f(E)) as a
-function of energy with appropriate labels and grid.</p>
+function of energy with appropriate labels and grid.
+Uses log-log scale for better visualization.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_lowestL_trajectories_3panel">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_lowestL_trajectories_3panel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowest_l_trajectories.dat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowestl_3panel.png'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_lowestL_trajectories_3panel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_lowestL_trajectories_3panel" title="Link to this definition"></a></dt>
-<dd><p>Create a 3-panel plot showing trajectories of particles with lowest angular momentum.</p>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_lowestL_trajectories_3panel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowest_l_trajectories.dat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowestl_3panel.png'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lowestl'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_lowestL_trajectories_3panel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_lowestL_trajectories_3panel" title="Link to this definition"></a></dt>
+<dd><p>Create a 3-panel plot showing trajectories of selected particles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the input data file containing trajectory data.
-Default is “lowest_l_trajectories.dat”.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot. Default is “lowestl_3panel.png”.</p></li>
+<li><p><strong>input_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to the input data file containing trajectory data.
+Default is &quot;lowest_l_trajectories.dat&quot;.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot. Default is &quot;lowestl_3panel.png&quot;.</p></li>
+<li><p><strong>file_prefix</strong> (<em>str</em><em>, </em><em>optional</em>) -- Prefix to use for labeling (&quot;lowestl&quot; or &quot;chosenl&quot;).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1181,23 +1202,26 @@ Default is “lowest_l_trajectories.dat”.</p></li>
 </dl>
 <p class="rubric">Notes</p>
 <p>The input file should have columns in the format:
-time  r1  E1  L1   r2  E2  L2   …   rN  EN  LN</p>
+time  r1  E1  L1   r2  E2  L2   ...   rN  EN  LN</p>
 <p>The function creates a 3-panel plot showing:
 1) Radii vs. time for each particle
 2) Energies vs. time for each particle
 3) Percentage deviation from average energy vs. time for each particle</p>
+<p>Label changes based on file type:
+- &quot;Lowest&quot; for lowest_l files
+- &quot;Chosen&quot; for chosen_l files</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_mass_enclosed">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_mass_enclosed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mass_enclosed.png'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_mass_enclosed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_mass_enclosed" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_mass_enclosed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_mass_enclosed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_mass_enclosed" title="Link to this definition"></a></dt>
 <dd><p>Plot enclosed mass as a function of radius and save to file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>r_values</strong> (<em>array-like</em>) – Radius values in kpc</p></li>
-<li><p><strong>mass_values</strong> (<em>array-like</em>) – Enclosed mass values at each radius in Msun</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “mass_enclosed.png”</p></li>
+<li><p><strong>r_values</strong> (<em>array-like</em>) -- Radius values in kpc</p></li>
+<li><p><strong>mass_values</strong> (<em>array-like</em>) -- Enclosed mass values at each radius in Msun</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;mass_enclosed.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1214,19 +1238,29 @@ showing the mass enclosed within each radius with appropriate labels and grid.</
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_nsphere_histograms">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_nsphere_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_nsphere_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_nsphere_histograms" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_nsphere_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_nsphere_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_nsphere_histograms" title="Link to this definition"></a></dt>
 <dd><p>Plots 2D histograms from the nsphere.c-produced binary histogram files.</p>
-<p>Expects each file to contain 3 columns and 40000 records (reshaped to 200 × 200).</p>
+<p>Expects each file to contain 3 columns and 160000 records (reshaped to 400 × 400).</p>
 <ul class="simple">
 <li><p>data/2d_hist_initial{suffix}.dat for the initial histogram.</p></li>
 <li><p>data/2d_hist_final{suffix}.dat for the final histogram.</p></li>
 </ul>
-<p>The plots are created using plt.pcolormesh and saved into the “results” folder.</p>
+<p>The plots are created using plt.pcolormesh and saved into the &quot;results&quot; folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>progress_callback</strong> (<em>callable</em><em>, </em><em>optional</em>) -- Function to call after each plot is saved,
+with the output file path as argument.</p></li>
+<li><p><strong>config</strong> (<em>dict</em><em>, </em><em>optional</em>) -- Configuration dictionary with plot settings</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_particles_histograms">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_particles_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_particles_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_particles_histograms" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_particles_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_particles_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_particles_histograms" title="Link to this definition"></a></dt>
 <dd><p>Plots 2D histograms from the particles files.</p>
 <ul class="simple">
 <li><p>Reads the initial particles file: data/particles{suffix}.dat (expected 4 columns)
@@ -1234,13 +1268,14 @@ and plots a histogram with plt.hist2d.</p></li>
 <li><p>Reads the final particles file: data/particlesfinal{suffix}.dat (expected 4 columns);
 computes a derived velocity value and then plots a 2D histogram.</p></li>
 </ul>
-<p>Resulting images are saved to the “results” folder.</p>
+<p>Resulting images are saved to the &quot;results&quot; folder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p></li>
-<li><p><strong>progress_callback</strong> (<em>callable</em><em>, </em><em>optional</em>) – Function to call after each plot is saved,
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p></li>
+<li><p><strong>progress_callback</strong> (<em>callable</em><em>, </em><em>optional</em>) -- Function to call after each plot is saved,
 with the output file path as argument.</p></li>
+<li><p><strong>config</strong> (<em>dict</em><em>, </em><em>optional</em>) -- Configuration dictionary with plot settings</p></li>
 </ul>
 </dd>
 </dl>
@@ -1248,14 +1283,14 @@ with the output file path as argument.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_psi">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psi_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'psi_profile.png'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_psi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_psi" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_psi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psi_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_psi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_psi" title="Link to this definition"></a></dt>
 <dd><p>Plot gravitational potential (Psi) as a function of radius and save to file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>r_values</strong> (<em>array-like</em>) – Radius values in kpc</p></li>
-<li><p><strong>psi_values</strong> (<em>array-like</em>) – Gravitational potential values at each radius (in km^2/s^2)</p></li>
-<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to save the output plot, by default “psi_profile.png”</p></li>
+<li><p><strong>r_values</strong> (<em>array-like</em>) -- Radius values in kpc</p></li>
+<li><p><strong>psi_values</strong> (<em>array-like</em>) -- Gravitational potential values at each radius (in km^2/s^2)</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot, by default &quot;psi_profile.png&quot;</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1278,8 +1313,8 @@ with appropriate labels and grid. Assumes psi_values are already scaled.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em>) – Path to the input data file containing trajectory data.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Path to save the output plot.</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the input data file containing trajectory data.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to save the output plot.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1294,14 +1329,59 @@ with appropriate labels and grid. Assumes psi_values are already scaled.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="nsphere_plot.plot_tangential_velocity_histogram">
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_tangential_velocity_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v_perp_data_initial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_perp_data_final</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tangential_velocity_histogram_compare.png'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_tangential_velocity_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_tangential_velocity_histogram" title="Link to this definition"></a></dt>
+<dd><p>Plot a comparison of initial and final tangential velocity distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v_perp_data_initial</strong> (<em>array-like</em>) -- Array of initial tangential velocity magnitudes (km/s).</p></li>
+<li><p><strong>v_perp_data_final</strong> (<em>array-like</em>) -- Array of final tangential velocity magnitudes (km/s).</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>optional</em>) -- Path to save the output plot.</p></li>
+<li><p><strong>plot_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) -- Tuple (min, max) for the x-axis range of the histogram. Auto-ranged if None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the saved plot file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="nsphere_plot.plot_total_energy_diagnostics">
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_total_energy_diagnostics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'results/total_energy_diagnostics.png'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_total_energy_diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_total_energy_diagnostics" title="Link to this definition"></a></dt>
+<dd><p>Create a three-panel diagnostic plot for total system energy conservation.</p>
+<p>Panel 1: Absolute values of KE, PE, and Total Energy vs time
+Panel 2: Percent change from initial values for all three quantities (auto-scaled)
+Panel 3: Percent change of total energy only (zoomed in for detail)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the total_energy_vs_time binary file from nsphere</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to save the output plot (PNG format)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the saved plot file, or None if plotting failed</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.plot_trajectories">
 <span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">plot_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#plot_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.plot_trajectories" title="Link to this definition"></a></dt>
 <dd><p>Plot particle trajectories (radius vs time) for multiple particles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input_file</strong> (<em>str</em>) – Path to the input data file containing trajectory data.</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Path to save the output plot.</p></li>
+<li><p><strong>input_file</strong> (<em>str</em>) -- Path to the input data file containing trajectory data.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to save the output plot.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1322,7 +1402,7 @@ for multiple particles over the simulation period.</p>
 <dd><p>Preprocess a single Rank file for phase space animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rank_file_data_with_suffix</strong> (<em>tuple</em>) – Tuple containing (rank_file, placeholder, ncol, max_r_all, max_v_all, nbins,
+<dd class="field-odd"><p><strong>rank_file_data_with_suffix</strong> (<em>tuple</em>) -- Tuple containing (rank_file, placeholder, ncol, max_r_all, max_v_all, nbins,
 kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1340,7 +1420,7 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 <dd><p>Print a footer for a section and log it if detailed logging is enabled.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>message</strong> (<em>str</em><em>, </em><em>optional</em>) – The footer message to display. Default is an empty string.</p>
+<dd class="field-odd"><p><strong>message</strong> (<em>str</em><em>, </em><em>optional</em>) -- The footer message to display. Default is an empty string.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1352,8 +1432,8 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>title</strong> (<em>str</em>) – The section title to display.</p></li>
-<li><p><strong>add_newline</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to add a newline before the header. Default is True.</p></li>
+<li><p><strong>title</strong> (<em>str</em>) -- The section title to display.</p></li>
+<li><p><strong>add_newline</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether to add a newline before the header. Default is True.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1365,7 +1445,7 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 <dd><p>Print a message to the console and also log it if detailed logging is enabled.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>message</strong> (<em>str</em>) – The message to print and potentially log.</p>
+<dd class="field-odd"><p><strong>message</strong> (<em>str</em>) -- The message to print and potentially log.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1376,7 +1456,7 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 <dd><p>Process a single animation frame for GIF output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>frame</strong> (<em>numpy.ndarray</em>) – The frame image data</p>
+<dd class="field-odd"><p><strong>frame</strong> (<em>numpy.ndarray</em>) -- The frame image data</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Processed frame ready for GIF encoding</p>
@@ -1394,8 +1474,8 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>ndarray</em>) – Particle data array</p></li>
-<li><p><strong>n_cols</strong> (<em>int</em>) – Number of columns in the data</p></li>
+<li><p><strong>data</strong> (<em>ndarray</em>) -- Particle data array</p></li>
+<li><p><strong>n_cols</strong> (<em>int</em>) -- Number of columns in the data</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1409,11 +1489,15 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="nsphere_plot.process_profile_plots">
-<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">process_profile_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#process_profile_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.process_profile_plots" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">process_profile_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#process_profile_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.process_profile_plots" title="Link to this definition"></a></dt>
 <dd><p>Process various profile data files and generate plots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_paths</strong> (<em>dict</em>) – Dictionary of file paths for various data files.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_paths</strong> (<em>dict</em>) -- Dictionary of file paths for various data files.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a><em>, </em><em>optional</em>) -- Configuration object containing plot settings. If provided,
+enables robust dynamic ranging for plots.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -1424,7 +1508,7 @@ kmsec_to_kpcmyr, project_root_path, local_suffix).</p>
 <dd><p>Process a rank file and return the snapshot number and decimated data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – The filename to process.</p>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) -- The filename to process.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>(snapshot_number, decimated_data) if successful or None if there was an error.</p>
@@ -1446,7 +1530,7 @@ performs downsampling to a common radius grid, and returns the processed data
 ready for animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>task_data_with_suffix</strong> (<em>tuple</em>) – A tuple containing (fname, project_root_path, local_suffix) where:
+<dd class="field-odd"><p><strong>task_data_with_suffix</strong> (<em>tuple</em>) -- A tuple containing (fname, project_root_path, local_suffix) where:
 - fname is the path to the sorted Rank data file
 - project_root_path is the explicit path to the project root directory
 - local_suffix is the suffix for file identification</p>
@@ -1481,10 +1565,10 @@ data for the first few particles.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em>) – Suffix for data files.</p></li>
-<li><p><strong>start_snap</strong> (<em>int</em>) – First snapshot number to include.</p></li>
-<li><p><strong>end_snap</strong> (<em>int</em>) – Last snapshot number to include (0 means use max available).</p></li>
-<li><p><strong>step_snap</strong> (<em>int</em>) – Step size between snapshots.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) -- Suffix for data files.</p></li>
+<li><p><strong>start_snap</strong> (<em>int</em>) -- First snapshot number to include.</p></li>
+<li><p><strong>end_snap</strong> (<em>int</em>) -- Last snapshot number to include (0 means use max available).</p></li>
+<li><p><strong>step_snap</strong> (<em>int</em>) -- Step size between snapshots.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1505,7 +1589,7 @@ is a list of (snap, energy_values) tuples from unsorted files.</p>
 This is more efficient than processing all snapshots when we only need one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) – Suffix for input/output files.</p>
+<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) -- Suffix for input/output files.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The processed data from snapshot 0, or None if not available.</p>
@@ -1523,7 +1607,7 @@ This is more efficient than processing all snapshots when we only need one.</p>
 specific particles based on their IDs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – The filename to process.</p>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) -- The filename to process.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>(snapshot_number, energy_values) if successful or None if there was an error.</p>
@@ -1540,7 +1624,7 @@ specific particles based on their IDs.</p>
 <dd><p>Process an unsorted rank file for energy-time plot, extracting data for specific tracked particle IDs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>task_data</strong> (<em>tuple</em>) – A tuple containing (fname, local_suffix) where:
+<dd class="field-odd"><p><strong>task_data</strong> (<em>tuple</em>) -- A tuple containing (fname, local_suffix) where:
 - fname is the path to the unsorted Rank data file
 - local_suffix is the suffix for file identification</p>
 </dd>
@@ -1561,8 +1645,8 @@ be included in the energy plots category.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_paths</strong> (<em>dict</em>) – Dictionary of file paths for various data files.</p></li>
-<li><p><strong>include_angular_momentum</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to include angular momentum plots. Default is True.</p></li>
+<li><p><strong>file_paths</strong> (<em>dict</em>) -- Dictionary of file paths for various data files.</p></li>
+<li><p><strong>include_angular_momentum</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether to include angular momentum plots. Default is True.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1574,7 +1658,7 @@ be included in the energy plots category.</p>
 <dd><p>Process trajectory and diagnostic plots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file_paths</strong> (<em>dict</em>) – Dictionary of file paths for various data files.</p>
+<dd class="field-odd"><p><strong>file_paths</strong> (<em>dict</em>) -- Dictionary of file paths for various data files.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1585,7 +1669,7 @@ be included in the energy plots category.</p>
 <dd><p>Process an unsorted rank file and return the snapshot number and energy values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>task_data_with_suffix</strong> (<em>tuple</em>) – A tuple containing (fname, project_root_path, local_suffix) where:
+<dd class="field-odd"><p><strong>task_data_with_suffix</strong> (<em>tuple</em>) -- A tuple containing (fname, project_root_path, local_suffix) where:
 - fname is the path to the unsorted Rank data file
 - project_root_path is the explicit path to the project root directory
 - local_suffix is the suffix for file identification</p>
@@ -1604,9 +1688,11 @@ be included in the energy plots category.</p>
 <span class="sig-prename descclassname"><span class="pre">nsphere_plot.</span></span><span class="sig-name descname"><span class="pre">process_variable_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/nsphere_plot.html#process_variable_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#nsphere_plot.process_variable_histograms" title="Link to this definition"></a></dt>
 <dd><p>Generates 1D variable distribution histograms comparing initial vs final distributions.
 Creates histograms for radius, velocity, radial velocity, and angular momentum.</p>
+<p>Note: This function creates 1D distributions, not 2D phase space plots,
+so it does not require robust ranging modifications.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) – The configuration object containing parsed arguments and settings.</p>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="#nsphere_plot.Configuration" title="nsphere_plot.Configuration"><em>Configuration</em></a>) -- The configuration object containing parsed arguments and settings.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True if successful, False otherwise.</p>
@@ -1624,15 +1710,13 @@ Creates histograms for radius, velocity, radial velocity, and angular momentum.<
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the lastparams.dat file. Default is “data/lastparams.dat”.</p></li>
-<li><p><strong>return_suffix</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return a suffix string. If False, return individual parameters.
-Default is True.</p></li>
-<li><p><strong>user_suffix</strong> (<em>str</em><em>, </em><em>optional</em>) – If provided, look for lastparams_user_suffix.dat instead of lastparams.dat.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) -- Base path to the lastparams.dat file.</p></li>
+<li><p><strong>return_suffix</strong> (<em>bool</em><em>, </em><em>optional</em>) -- If True, return a suffix string. If False, return individual parameters.</p></li>
+<li><p><strong>user_suffix</strong> (<em>str</em><em>, </em><em>optional</em>) -- If provided, look for lastparams&lt;user_suffix&gt;.dat instead of lastparams.dat.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>If return_suffix is True, returns a string like “_[filetag]_npts_Ntimes_tfinal_factor”
-or just “_npts_Ntimes_tfinal_factor” if no file tag is present.
+<dd class="field-even"><p>If return_suffix is True, returns a string like &quot;_[filetag]_npts_Ntimes_tfinal_factor&quot;.
 If return_suffix is False, returns a tuple of (npts, Ntimes, tfinal_factor, file_tag).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1648,8 +1732,10 @@ If return_suffix is False, returns a tuple of (npts, Ntimes, tfinal_factor, file
 Note: Assumes density_snapshots contains 4*pi*r^2*rho.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) – Tuple containing (snapshot_data, tfinal_factor, total_frames, r_max, project_root_path) where
-snapshot_data is the (snap, radius, density) tuple from density_snapshots.</p>
+<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) -- Tuple containing (snapshot_data, tfinal_factor, total_frames, r_range, d_range, project_root_path) where
+snapshot_data is the (snap, radius, density) tuple from density_snapshots,
+r_range is (r_min, r_max) tuple for radius axis limits,
+d_range is (d_min, d_max) tuple for density axis limits.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Image data for the rendered frame.</p>
@@ -1666,8 +1752,10 @@ snapshot_data is the (snap, radius, density) tuple from density_snapshots.</p>
 <dd><p>Render a single frame of mass profile animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) – Tuple containing (snapshot_data, tfinal_factor, total_frames, r_max, project_root_path) where
-snapshot_data is the (snap, radius, mass) tuple from mass_snapshots.</p>
+<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) -- Tuple containing (snapshot_data, tfinal_factor, total_frames, r_range, m_range, project_root_path) where:
+- snapshot_data is the (snap, radius, mass) tuple from mass_snapshots
+- r_range is (r_min, r_max) tuple for x-axis
+- m_range is (m_min, m_max) tuple for y-axis</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Image data for the rendered frame.</p>
@@ -1685,7 +1773,7 @@ snapshot_data is the (snap, radius, mass) tuple from mass_snapshots.</p>
 This function needs to be at the module level for multiprocessing to work.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) – <p>A tuple containing (snap_num, H, vmax, tfinal_factor, total_snapshots)</p>
+<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) -- <p>A tuple containing (snap_num, H, vmax, tfinal_factor, total_snapshots)</p>
 <dl class="simple">
 <dt>snap_num<span class="classifier">int</span></dt><dd><p>The snapshot number for labeling.</p>
 </dd>
@@ -1715,8 +1803,10 @@ This function needs to be at the module level for multiprocessing to work.</p>
 <dd><p>Render a single frame of psi profile animation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) – Tuple containing (snapshot_data, tfinal_factor, total_frames, r_max, project_root_path) where
-snapshot_data is the (snap, radius, psi) tuple from psi_snapshots.</p>
+<dd class="field-odd"><p><strong>frame_data</strong> (<em>tuple</em>) -- Tuple containing (snapshot_data, tfinal_factor, total_frames, r_range, p_range, project_root_path) where
+snapshot_data is the (snap, radius, psi) tuple from psi_snapshots,
+r_range is (r_min, r_max) tuple for radius axis limits,
+p_range is (p_min, p_max) tuple for psi axis limits.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Image data for the rendered frame.</p>
@@ -1741,13 +1831,13 @@ Ensures cursor is always restored when the program exits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the file to read</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) – Data type to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the file to read</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) -- Data type to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Filtered array containing only valid data, or None if
-the file doesn’t exist or contains no valid data</p>
+the file doesn't exist or contains no valid data</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray or None</p>
@@ -1771,13 +1861,13 @@ contains no valid data after filtering.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the file to read</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) – Data type to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the file to read</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em>, </em><em>optional</em>) -- Data type to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Filtered array containing only valid data from the first 10 lines,
-or None if the file doesn’t exist or contains no valid data</p>
+or None if the file doesn't exist or contains no valid data</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray or None</p>
@@ -1795,14 +1885,14 @@ Useful for analyzing the beginning of large files efficiently.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the binary file to read</p></li>
-<li><p><strong>ncols</strong> (<em>int</em>) – Number of columns expected in the data</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Data type(s) to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the binary file to read</p></li>
+<li><p><strong>ncols</strong> (<em>int</em>) -- Number of columns expected in the data</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) -- Data type(s) to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Filtered array containing only valid data from the first 10 rows,
-or None if the file doesn’t exist or contains no valid data</p>
+or None if the file doesn't exist or contains no valid data</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray or None</p>
@@ -1827,14 +1917,14 @@ or None if the file doesn’t exist or contains no valid data</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the binary file to read</p></li>
-<li><p><strong>ncols</strong> (<em>int</em>) – Number of columns expected in the data</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Data type(s) to use for the array, by default np.float32</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the binary file to read</p></li>
+<li><p><strong>ncols</strong> (<em>int</em>) -- Number of columns expected in the data</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) -- Data type(s) to use for the array, by default np.float32</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>2D float array containing only valid data, or None if
-the file doesn’t exist or contains no valid data</p>
+the file doesn't exist or contains no valid data</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray or None</p>
@@ -1863,10 +1953,10 @@ to read only requested rows. Falls back to loading the full file via
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – Path to the binary file (assumed flat row data).</p></li>
-<li><p><strong>ncols</strong> (<em>int</em>) – Number of columns per row.</p></li>
-<li><p><strong>particle_ids</strong> (<em>array-like</em>) – Array of particle IDs (0-based row indices) to extract.</p></li>
-<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Data type of file contents. Basic numpy dtypes trigger optimized
+<li><p><strong>filename</strong> (<em>str</em>) -- Path to the binary file (assumed flat row data).</p></li>
+<li><p><strong>ncols</strong> (<em>int</em>) -- Number of columns per row.</p></li>
+<li><p><strong>particle_ids</strong> (<em>array-like</em>) -- Array of particle IDs (0-based row indices) to extract.</p></li>
+<li><p><strong>dtype</strong> (<em>numpy.dtype</em><em> or </em><em>list</em><em>, </em><em>optional</em>) -- Data type of file contents. Basic numpy dtypes trigger optimized
 seek-based reading. Lists/tuples trigger a full read and fallback
 extraction. Default is np.float32.</p></li>
 </ul>
@@ -1874,7 +1964,7 @@ extraction. Default is np.float32.</p></li>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Numpy array (float32) containing only the rows for the specified
 particle IDs (NaNs for missing/invalid IDs), or None if file
-doesn’t exist or a fatal error occurs. Returns float32 array
+doesn't exist or a fatal error occurs. Returns float32 array
 even if input dtype has different precision.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1895,7 +1985,7 @@ even if input dtype has different precision.</p>
 <dd><p>Setup file paths for all data files using the given suffix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) – The suffix to use for all file names.</p>
+<dd class="field-odd"><p><strong>suffix</strong> (<em>str</em>) -- The suffix to use for all file names.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dictionary containing all file paths.</p>
@@ -1912,7 +2002,7 @@ even if input dtype has different precision.</p>
 <dd><p>Setup global parameters based on command line arguments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> (<em>argparse.Namespace</em>) – The parsed command line arguments.</p>
+<dd class="field-odd"><p><strong>args</strong> (<em>argparse.Namespace</em>) -- The parsed command line arguments.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The calculated parameters (suffix, start_snap, end_snap, step_snap, duration).</p>
@@ -1936,7 +2026,7 @@ even if input dtype has different precision.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Creates a log directory if it doesn’t exist and configures
+<p>Creates a log directory if it doesn't exist and configures
 a file-based logger that writes to log/nsphere_plot.log with
 timestamp, log level, and message formatting.</p>
 </dd></dl>
@@ -1955,7 +2045,7 @@ timestamp, log level, and message formatting.</p>
 <dd><p>Display a minimal visual indicator during progress delay.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>delay_seconds</strong> (<em>float</em>) – The number of seconds to delay/pace</p>
+<dd class="field-odd"><p><strong>delay_seconds</strong> (<em>float</em>) -- The number of seconds to delay/pace</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -1968,13 +2058,13 @@ timestamp, log level, and message formatting.</p>
 <dd><p>Display a visual timer with dots for section transitions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>delay_seconds</strong> (<em>float</em>) – The number of seconds to delay/pace</p>
+<dd class="field-odd"><p><strong>delay_seconds</strong> (<em>float</em>) -- The number of seconds to delay/pace</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
 <p>Shows an upward counting timer with dots accumulating each second.
 Displays the full delay_seconds at the end to ensure consistent timing.
-Allows the user to skip the delay with spacebar or pause/resume with ‘p’.</p>
+Allows the user to skip the delay with spacebar or pause/resume with 'p'.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1984,8 +2074,8 @@ Allows the user to skip the delay with spacebar or pause/resume with ‘p’.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sig</strong> (<em>int</em>) – Signal number</p></li>
-<li><p><strong>frame</strong> (<em>frame</em>) – Current stack frame</p></li>
+<li><p><strong>sig</strong> (<em>int</em>) -- Signal number</p></li>
+<li><p><strong>frame</strong> (<em>frame</em>) -- Current stack frame</p></li>
 </ul>
 </dd>
 </dl>
@@ -2001,8 +2091,8 @@ with a second Ctrl+C if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>section_key</strong> (<em>str</em>) – Unique identifier for this plotting section</p></li>
-<li><p><strong>total_plots</strong> (<em>int</em>) – Total number of plots expected in this section</p></li>
+<li><p><strong>section_key</strong> (<em>str</em>) -- Unique identifier for this plotting section</p></li>
+<li><p><strong>total_plots</strong> (<em>int</em>) -- Total number of plots expected in this section</p></li>
 </ul>
 </dd>
 </dl>
@@ -2020,7 +2110,7 @@ information for rate calculation.</p>
 Used to prevent unwanted console output during progress bar updates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Yields<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>None</em> – Control returns to the caller with stdout suppressed</p>
+<dd class="field-odd"><p><em>None</em> -- Control returns to the caller with stdout suppressed</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -2040,8 +2130,8 @@ even if an exception occurs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>text</strong> (<em>str</em>) – The string to potentially truncate and pad.</p></li>
-<li><p><strong>fallback_width</strong> (<em>int</em><em>, </em><em>optional</em>) – The width to use if terminal size can’t be determined, by default 100.</p></li>
+<li><p><strong>text</strong> (<em>str</em>) -- The string to potentially truncate and pad.</p></li>
+<li><p><strong>fallback_width</strong> (<em>int</em><em>, </em><em>optional</em>) -- The width to use if terminal size can't be determined, by default 100.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2060,8 +2150,8 @@ even if an exception occurs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>section_key</strong> (<em>str</em>) – Identifier for the plotting section</p></li>
-<li><p><strong>output_file</strong> (<em>str</em>) – Path to the plot file that was saved</p></li>
+<li><p><strong>section_key</strong> (<em>str</em>) -- Identifier for the plotting section</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) -- Path to the plot file that was saved</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2085,9 +2175,9 @@ enough data points are available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>stop_timer</strong> (<em>threading.Event</em>) – Event to signal when to stop the timer thread</p></li>
-<li><p><strong>energy_plot_start_time</strong> (<em>float</em>) – Time when energy plot processing started</p></li>
-<li><p><strong>paced_mode</strong> (<em>bool</em>) – Whether the visualization is in paced mode (with deliberate delays)</p></li>
+<li><p><strong>stop_timer</strong> (<em>threading.Event</em>) -- Event to signal when to stop the timer thread</p></li>
+<li><p><strong>energy_plot_start_time</strong> (<em>float</em>) -- Time when energy plot processing started</p></li>
+<li><p><strong>paced_mode</strong> (<em>bool</em>) -- Whether the visualization is in paced mode (with deliberate delays)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2104,7 +2194,7 @@ until stop_timer is set.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../c_api/index.html" class="btn btn-neutral float-left" title="C API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../c_api/quadsort.html" class="btn btn-neutral float-left" title="QuadSort (quadsort.c / quadsort.h)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../examples/index.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

@@ -25,6 +25,34 @@ QUAD_CACHE_BYTES := $(shell python3 -c "import math, sys; sz = int(sys.argv[1]) 
 # ================================================================
 CC = clang
 
+# --- Architecture Specific Flags ---
+UNAME_MACHINE := $(shell uname -m)
+ifeq ($(UNAME_MACHINE),arm64)
+    # Apple Silicon: Detect M-series chip for specific tuning
+    RAW_MODEL   := $(shell sysctl -n machdep.cpu.brand_string 2>/dev/null)
+    # Extract M-series (M1, M2, M3, M4). If no match, CPU_FAMILY is empty.
+    CPU_FAMILY  := $(shell printf "%s" "$(RAW_MODEL)" | sed -E -e 's/^Apple (M[1-4]).*$$/\1/' -e 't' -e 'd')
+
+    ifeq ($(CPU_FAMILY),M4)
+        ARCH_FLAGS := -mcpu=apple-m4
+    else ifeq ($(CPU_FAMILY),M3)
+        ARCH_FLAGS := -mcpu=apple-m3
+    else ifeq ($(CPU_FAMILY),M2)
+        ARCH_FLAGS := -mcpu=apple-m2
+    else ifeq ($(CPU_FAMILY),M1)
+        ARCH_FLAGS := -mcpu=apple-m1
+    else
+        # Fallback if M-series not specifically identified or is newer than M4.
+        # -mcpu=apple-m1 provides a safe and effective baseline for Apple Silicon.
+        ARCH_FLAGS := -mcpu=apple-m1
+        $(info Warning: Apple Silicon M-series not specifically identified from '$(RAW_MODEL)'. Falling back to $(ARCH_FLAGS))
+    endif
+else
+    # Intel Macs: Use native architecture optimization
+    ARCH_FLAGS := -march=native
+endif
+# --- End Architecture Specific Flags ---
+
 # --- OpenMP Detection ---
 # Determine architecture-specific library paths (Apple Silicon vs Intel)
 UNAME_MACHINE := $(shell uname -m)
@@ -66,15 +94,17 @@ endif
 # ================================================================
 
 # Compiler optimization flags for best performance with generated code
-CFLAGS = -Wall -Wextra -Ofast -march=native -ffast-math -funroll-loops -fvectorize -DQUAD_CACHE=$(QUAD_CACHE_BYTES) $(DEBUG_FLAGS) $(OPENMP_FLAGS)
+CFLAGS = -Wall -Wextra -O3 -ffast-math $(ARCH_FLAGS) -funroll-loops -fvectorize \
+         -DQUAD_CACHE=$(QUAD_CACHE_BYTES) $(DEBUG_FLAGS) $(OPENMP_FLAGS)
 
 # macOS-specific library paths using Homebrew
 HOMEBREW_PREFIX ?= $(shell brew --prefix)
 GSL_PREFIX ?= $(HOMEBREW_PREFIX)/opt/gsl
-CFLAGS += -I$(GSL_PREFIX)/include -I$(C_SRC_DIR)
+FFTW_PREFIX ?= $(HOMEBREW_PREFIX)/opt/fftw
+CFLAGS += -I$(GSL_PREFIX)/include -I$(FFTW_PREFIX)/include -I$(C_SRC_DIR)
 
 # Linker configuration with macOS-specific library paths
-LDFLAGS = -L$(GSL_PREFIX)/lib $(OPENMP_LDFLAGS) $(DEBUG_FLAGS)
+LDFLAGS = -L$(GSL_PREFIX)/lib -L$(FFTW_PREFIX)/lib $(OPENMP_LDFLAGS) $(DEBUG_FLAGS)
 LDLIBS = -lgsl -lgslcblas -lm -lfftw3 -lfftw3_threads
 
 # --- Python Executable Definitions ---
@@ -136,8 +166,9 @@ $(ROOT_DIR)/$(TARGET): $(SRC) Makefile.MacOS
 # --- Configuration for Single-Threaded Build ---
 # ================================================================
 # Flag set for explicitly requested non-OpenMP builds
-NO_OMP_CFLAGS = -Wall -Wextra -O3 -march=native -ffast-math -funroll-loops -fvectorize $(DEBUG_FLAGS) -I$(GSL_PREFIX)/include -I$(C_SRC_DIR)
-NO_OMP_LDFLAGS = -L$(GSL_PREFIX)/lib $(DEBUG_FLAGS)
+NO_OMP_CFLAGS = -Wall -Wextra -O3 -ffast-math $(ARCH_FLAGS) -funroll-loops -fvectorize $(DEBUG_FLAGS) \
+                -I$(GSL_PREFIX)/include -I$(FFTW_PREFIX)/include -I$(C_SRC_DIR)
+NO_OMP_LDFLAGS = -L$(GSL_PREFIX)/lib -L$(FFTW_PREFIX)/lib $(DEBUG_FLAGS)
 
 # ================================================================
 # --- Additional Build Targets ---

@@ -976,74 +976,65 @@ def read_lastparams(filename="data/lastparams.dat", return_suffix=True, user_suf
     Parameters
     ----------
     filename : str, optional
-        Path to the lastparams.dat file. Default is "data/lastparams.dat".
+        Base path to the lastparams.dat file.
     return_suffix : bool, optional
         If True, return a suffix string. If False, return individual parameters.
-        Default is True.
     user_suffix : str, optional
-        If provided, look for lastparams_user_suffix.dat instead of lastparams.dat.
+        If provided, look for lastparams<user_suffix>.dat instead of lastparams.dat.
 
     Returns
     -------
     str or tuple
-        If return_suffix is True, returns a string like "_[filetag]_npts_Ntimes_tfinal_factor"
-        or just "_npts_Ntimes_tfinal_factor" if no file tag is present.
+        If return_suffix is True, returns a string like "_[filetag]_npts_Ntimes_tfinal_factor".
         If return_suffix is False, returns a tuple of (npts, Ntimes, tfinal_factor, file_tag).
     """
     global showing_help
 
     default_suffix = ""
-    default_params = (30000, 1001, 5, "")  # Default values for (npts, Ntimes, tfinal_factor, file_tag)
+    default_params = (30000, 1001, 5, "")  # Default values
 
-    # If showing help, return default values without file operations
     if showing_help:
         return default_suffix if return_suffix else default_params
 
-    # Always use data/lastparams.dat unless a specific suffix was provided
+    # Determine which lastparams file to read
     if user_suffix:
-        # If user supplied a suffix, use lastparams_suffix.dat
-        suffix_to_use = user_suffix.lstrip('_')  # Remove leading underscore if present
-        filename = f"data/lastparams_{suffix_to_use}.dat"
-        logger.info(f"Using user-specified suffix: {suffix_to_use}, looking for file: {filename}")
+        # If user supplied a suffix, use lastparams<suffix>.dat
+        filename = f"data/lastparams{user_suffix}.dat"
+        logger.info(f"Attempting to read parameters from user-specified file: {filename}")
     else:
-        # Otherwise use lastparams.dat
+        # Otherwise, use the default lastparams.dat which points to the latest run
         filename = "data/lastparams.dat"
-        logger.info(f"Using default lastparams.dat file")
+        logger.info(f"Reading parameters from default file: {filename}")
 
     if not os.path.exists(filename):
-        print(truncate_and_pad_string(f"Error: Could not find {filename}, and no suffixed lastparams files were found."))
-        print(truncate_and_pad_string("Please run the simulation before plotting."))
-        print(truncate_and_pad_string("Alternatively, specify parameters using the --suffix command line argument."))
+        print(truncate_and_pad_string(f"Error: Could not find parameter file: {filename}"))
+        print(truncate_and_pad_string("Please run the simulation or specify a valid --suffix."))
         sys.exit(1)
 
     try:
         with open(filename, "r") as f:
             line = f.readline().strip()
-            if not line:
-                return default_suffix if return_suffix else default_params
+        if not line:
+            return default_suffix if return_suffix else default_params
 
-            parts = line.split(maxsplit=3)  # Split into at most 4 parts to handle file tag with spaces
-            if len(parts) < 3:
-                return default_suffix if return_suffix else default_params
+        parts = line.split(maxsplit=3)
+        if len(parts) < 3:
+            return default_suffix if return_suffix else default_params
 
-            npts = int(parts[0])
-            Ntimes = int(parts[1])
-            tfinal_factor = int(parts[2])
+        npts, Ntimes, tfinal_factor = map(int, parts[:3])
+        file_tag = parts[3] if len(parts) > 3 else ""
 
-            # Get file tag if available (might be empty)
-            file_tag = parts[3] if len(parts) > 3 else ""
-
-            # Log the file tag found in the file
-            logger.info(f"File tag from lastparams file: '{file_tag}'")
+        logger.info(f"Read parameters: npts={npts}, Ntimes={Ntimes}, tfinal={tfinal_factor}, tag='{file_tag}'")
 
         if return_suffix:
-            # Build suffix based on file tag
+            # Reconstruct the suffix from the read parameters
             if file_tag:
                 return f"_{file_tag}_{npts}_{Ntimes}_{tfinal_factor}"
             else:
                 return f"_{npts}_{Ntimes}_{tfinal_factor}"
         else:
             return (npts, Ntimes, tfinal_factor, file_tag)
+
     except Exception as e:
         print(truncate_and_pad_string(f"Warning: Error reading {filename}: {e}"))
         return default_suffix if return_suffix else default_params
@@ -1075,6 +1066,513 @@ ncol_Rank_Mass_Rad_VRad_unsorted = 7
 
 # Constants for unit conversions
 kmsec_to_kpcmyr = 1.02271e-3  # Conversion factor from km/s to kpc/Myr
+
+def _calculate_robust_range(data_array, percentile=95.0, percentile_multiplier=1.2,
+                           min_abs_extent=1.0,
+                           default_if_empty=(0, 1.0),
+                           can_be_negative=False,
+                           force_symmetric_around_zero=False,
+                           axis_name="axis"):
+    """
+    Calculates a robust plot range based on percentiles.
+
+    Handles positive-only data (e.g., radius, speed magnitude) and data
+    that can be positive or negative (e.g., radial velocity).
+
+    Parameters
+    ----------
+    data_array : np.ndarray
+        1D array of data points.
+    percentile : float
+        Percentile to use (0-100) for range calculation.
+    percentile_multiplier : float
+        Factor to multiply the percentile value by to determine the range extent.
+    min_abs_extent : float, optional
+        A minimum absolute value for the extent of the range (e.g., if range is
+        [0, X], then X must be at least `min_abs_extent`). Ensures a non-zero
+        range. Default is 1.0.
+    default_if_empty : tuple, optional
+        Default (min_val, max_val) tuple to return if `data_array` is empty
+        or contains no finite values. Default is (0, 1.0).
+    can_be_negative : bool, optional
+        If True, the data can have negative values, and the range calculation
+        will consider both positive and negative parts independently.
+        If False, data is assumed to be non-negative, and the range will
+        start from 0. Default is False.
+    force_symmetric_around_zero : bool, optional
+        If True (and `can_be_negative` is True), makes the range symmetric
+        around zero, e.g., (-max_abs_val, max_abs_val). Default is False.
+    percentile_fallback : float, optional
+        Percentile (0-100) to use for range estimation if the median is close
+        to zero, to avoid an overly small range. Default is 95.0.
+    axis_name : str, optional
+        Name of the axis for logging purposes (e.g., "radius", "velocity").
+        Default is "axis".
+
+    Returns
+    -------
+    tuple
+        (min_val, max_val) for the plot range.
+    """
+    if data_array is None or data_array.size == 0:
+        logger.debug(f"_calculate_robust_range for {axis_name}: Data array empty. Returning default {default_if_empty}.")
+        return default_if_empty
+
+    finite_data = data_array[np.isfinite(data_array)]
+    if finite_data.size == 0:
+        logger.debug(f"_calculate_robust_range for {axis_name}: No finite data. Returning default {default_if_empty}.")
+        return default_if_empty
+
+    min_lim_final = 0.0
+    max_lim_final = min_abs_extent # Initialize with a minimal positive extent
+
+    if can_be_negative:
+        pos_data = finite_data[finite_data > 0]
+        neg_data = finite_data[finite_data < 0] # Keep negative values for percentile calculation
+
+        # --- Positive side ---
+        if pos_data.size > 0:
+            # Direct index calculation for percentile (data may not be sorted)
+            pos_data_sorted = np.sort(pos_data)
+            p_index = int(percentile / 100.0 * (len(pos_data_sorted) - 1))
+            p_val_pos = pos_data_sorted[p_index]
+            max_lim_final = max(p_val_pos * percentile_multiplier, min_abs_extent)
+            logger.debug(f"_calc_robust for {axis_name} (pos): {percentile}th percentile ({p_val_pos:.2e}) * {percentile_multiplier} -> max_lim_final={max_lim_final:.2e}")
+        else: # No positive data
+            max_lim_final = default_if_empty[1] if default_if_empty[1] > 0 else min_abs_extent # Ensure some positive extent
+
+        # --- Negative side ---
+        if neg_data.size > 0:
+            # Direct index calculation for negative data percentile
+            neg_data_abs_sorted = np.sort(np.abs(neg_data))
+            p_index = int(percentile / 100.0 * (len(neg_data_abs_sorted) - 1))
+            p_val_neg_abs = neg_data_abs_sorted[p_index]
+            min_lim_final = -max(p_val_neg_abs * percentile_multiplier, min_abs_extent)
+            logger.debug(f"_calc_robust for {axis_name} (neg): {percentile}th percentile of abs ({p_val_neg_abs:.2e}) * {percentile_multiplier} -> min_lim_final={min_lim_final:.2e}")
+        else: # No negative data
+            min_lim_final = default_if_empty[0] if default_if_empty[0] < 0 else -min_abs_extent # Ensure some negative extent if expected
+
+        if force_symmetric_around_zero:
+            max_abs_val = max(np.abs(min_lim_final), np.abs(max_lim_final))
+            min_lim_final = -max_abs_val
+            max_lim_final = max_abs_val
+
+    else: # Data is purely positive (or zero)
+        # For positive-only data, range starts at 0.
+        min_lim_final = 0.0
+        abs_finite_data = np.abs(finite_data) # Ensure all positive for percentile calculation
+        if abs_finite_data.size > 0:
+            # Direct index calculation for percentile
+            abs_data_sorted = np.sort(abs_finite_data)
+            p_index = int(percentile / 100.0 * (len(abs_data_sorted) - 1))
+            p_val_abs = abs_data_sorted[p_index]
+            max_lim_final = max(p_val_abs * percentile_multiplier, min_abs_extent)
+            logger.debug(f"_calc_robust for {axis_name} (pos-only): {percentile}th percentile ({p_val_abs:.2e}) * {percentile_multiplier} -> max_lim_final={max_lim_final:.2e}")
+        else: # Should not happen due to earlier check, but as a fallback
+            max_lim_final = default_if_empty[1]
+
+    # Ensure min_lim is less than max_lim
+    if min_lim_final >= max_lim_final:
+        if can_be_negative and not force_symmetric_around_zero:
+             # Could happen if e.g. only negative data, min_lim_final calculated, max_lim_final is default_if_empty[1]
+             # or only positive data. Try to make a sensible small range.
+            if min_lim_final == 0 and max_lim_final == 0: # Both ended up zero
+                max_lim_final = min_abs_extent
+            else: # If one side is zero, and other side also becomes zero or crosses over
+                if np.abs(min_lim_final) > np.abs(max_lim_final):
+                    max_lim_final = np.abs(min_lim_final) / 2.0 # Arbitrary small positive
+                else:
+                    min_lim_final = -np.abs(max_lim_final) / 2.0 # Arbitrary small negative
+        elif force_symmetric_around_zero : # Should be covered by logic but as safety
+            max_lim_final = max(np.abs(min_lim_final), np.abs(max_lim_final), min_abs_extent)
+            min_lim_final = -max_lim_final
+        else: # Positive only data
+            max_lim_final = max(min_lim_final, max_lim_final, min_abs_extent) # Ensure max_lim is at least min_abs_extent
+        logger.debug(f"_calc_robust for {axis_name}: Adjusted min/max due to overlap or zero: min={min_lim_final:.2e}, max={max_lim_final:.2e}")
+
+
+    logger.debug(f"_calculate_robust_range for {axis_name}: Result ({min_lim_final:.2e}, {max_lim_final:.2e})")
+    return (min_lim_final, max_lim_final)
+
+
+def _calculate_global_animation_ranges(rank_files_subset,
+                                       r_min_abs_extent, v_min_abs_extent,
+                                       r_default_if_empty, v_default_if_empty,
+                                       kmsec_to_kpcmyr,
+                                       current_suffix_for_logging,
+                                       axis_name_prefix="anim_global",
+                                       config=None):
+    """
+    Calculates global X (radius) and Y (velocity) ranges for phase space animation.
+
+    Processes only the first and last snapshot files, calculates 95th percentile
+    for both radius and velocity, then uses the maximum of these two ranges.
+    This ensures consistent axis scaling across all animation frames.
+
+    Parameters
+    ----------
+    rank_files_subset : list[str]
+        A list of Rank snapshot filenames to sample for range calculation.
+    r_min_abs_extent : float
+        Minimum absolute extent for the radius range.
+    v_min_abs_extent : float
+        Minimum absolute extent for the velocity range.
+    r_default_if_empty : tuple
+        Default (min, max) for radius range if data is empty.
+    v_default_if_empty : tuple
+        Default (min, max) for velocity range if data is empty.
+    kmsec_to_kpcmyr : float
+        Conversion factor from km/s to kpc/Myr (or its inverse depending on usage).
+        Here, it's used to convert simulation velocity units to km/s.
+    current_suffix_for_logging : str
+        The current simulation suffix, used for logging messages.
+    axis_name_prefix : str, optional
+        Prefix for axis names in logging messages. Default is "anim_global".
+
+    Returns
+    -------
+    tuple
+        A tuple ((overall_min_r, overall_max_r), (overall_min_v, overall_max_v))
+        representing the global ranges for radius and velocity. Returns default
+        ranges if no valid data is found in the subset.
+    """
+    if not rank_files_subset:
+        logger.warning(f"{axis_name_prefix}: No rank files provided for global range calculation. Returning defaults.")
+        return (r_default_if_empty, v_default_if_empty)
+
+    # Use config parameters if available
+    percentile = 95.0
+    x_percentile_multiplier = 1.2
+    y_percentile_multiplier = 1.2
+    if config:
+        percentile = getattr(config, 'x_percentile', 95.0)
+        x_percentile_multiplier = getattr(config, 'x_percentile_multiplier', 1.2)
+        y_percentile_multiplier = getattr(config, 'y_percentile_multiplier', 1.2)
+    
+    # Process only first and last frames
+    frames_to_check = []
+    if len(rank_files_subset) > 0:
+        frames_to_check.append(rank_files_subset[0])  # First frame
+        if len(rank_files_subset) > 1:
+            frames_to_check.append(rank_files_subset[-1])  # Last frame
+    
+    max_r = 0
+    max_v = 0
+    any_valid_data_found = False
+    
+    # Define dtype list for efficient loading of specific columns
+    # Rank(0), Mass(1), Radius(2), Vrad(3), Psi(4), Energy(5), L(6), Density(7)
+    # We need Radius (2), Vrad (3), L (6)
+    cols_to_load_indices = sorted([2, 3, 6])
+    # Dtype for *all* 8 columns of Rank_Mass_Rad_VRad_sorted*.dat
+    full_rank_sorted_dtype_list = [
+        np.int32, np.float32, np.float32, np.float32,
+        np.float32, np.float32, np.float32, np.float32
+    ]
+    
+    # Map loaded column index back to conceptual meaning (R, Vrad, L)
+    idx_map_radius = 0
+    idx_map_vrad = 1
+    idx_map_l = 2
+
+    logger.info(f"{axis_name_prefix}: Calculating 95th percentile ranges for first and last frames (2 files max).")
+
+    for fname in frames_to_check:
+        loaded_cols = load_specific_columns_bin(
+            fname,
+            ncols_total=ncol_Rank_Mass_Rad_VRad_sorted,
+            cols_to_load=cols_to_load_indices,
+            dtype_list=full_rank_sorted_dtype_list
+        )
+
+        if loaded_cols is None or len(loaded_cols) != len(cols_to_load_indices):
+            continue
+
+        radii_snap_raw = loaded_cols[idx_map_radius]
+        vrad_snap_raw = loaded_cols[idx_map_vrad]
+        l_snap_raw = loaded_cols[idx_map_l]
+        del loaded_cols
+        gc.collect()
+
+        # Filter out non-positive radii
+        valid_radius_mask = (radii_snap_raw > 1e-9) & np.isfinite(radii_snap_raw)
+        if not np.any(valid_radius_mask):
+            continue
+
+        radii_snap = radii_snap_raw[valid_radius_mask]
+        vrad_snap = vrad_snap_raw[valid_radius_mask]
+        l_snap = l_snap_raw[valid_radius_mask]
+
+        # Calculate total velocity in km/s
+        with np.errstate(divide='ignore', invalid='ignore'):
+            tangential_velocity_sim = l_snap / radii_snap
+        total_velocity_sim = np.sqrt(vrad_snap**2 + tangential_velocity_sim**2)
+        total_velocity_kms_snap = total_velocity_sim / kmsec_to_kpcmyr
+
+        # Filter velocities for finite values
+        valid_velocity_mask = np.isfinite(total_velocity_kms_snap)
+        if not np.any(valid_velocity_mask):
+             continue
+        
+        final_radii_snap = radii_snap[valid_velocity_mask]
+        final_total_velocity_kms_snap = total_velocity_kms_snap[valid_velocity_mask]
+
+        if final_radii_snap.size == 0:
+            continue
+        
+        any_valid_data_found = True
+
+        # Calculate 95th percentile for this frame
+        r_95 = np.percentile(final_radii_snap, percentile) * x_percentile_multiplier
+        v_95 = np.percentile(final_total_velocity_kms_snap, percentile) * y_percentile_multiplier
+        
+        # Update maximum values
+        max_r = max(max_r, r_95)
+        max_v = max(max_v, v_95)
+
+    if not any_valid_data_found:
+        logger.warning(f"{axis_name_prefix}: No valid data found in any snapshot files. Returning defaults.")
+        return (r_default_if_empty, v_default_if_empty)
+    
+    # Apply minimum extents if needed
+    max_r = max(max_r, r_min_abs_extent)
+    max_v = max(max_v, v_min_abs_extent)
+    
+    final_r_range = (0, max_r)
+    final_v_range = (0, max_v)
+
+    logger.info(f"{axis_name_prefix}: 95th percentile-based ranges (first/last frames): R={final_r_range}, V={final_v_range}")
+    return (final_r_range, final_v_range)
+
+
+
+def _calculate_profile_animation_ranges(snapshots, config, data_index=2, 
+                                       x_default_max=300.0, y_multiplier=1.1,
+                                       animation_name=""):
+    """
+    Calculate X and Y axis ranges for profile animations using smart x-axis calculation
+    based on where curves peak/decay or reach asymptotic values.
+    
+    Parameters
+    ----------
+    snapshots : list
+        List of snapshot tuples (snap, x_data, y_data)
+    config : Configuration
+        Configuration object (checked for use_median_ranges flag)
+    data_index : int, optional
+        Index of the data value in snapshot tuple (2 for most animations)
+    x_default_max : float, optional
+        Default maximum X value if calculation fails
+    y_multiplier : float, optional
+        Multiplier for Y-axis maximum (default 1.1 = 10% headroom)
+    animation_name : str
+        Name of the animation (used to determine calculation method)
+        
+    Returns
+    -------
+    tuple
+        ((x_min, x_max), y_max) where x_max is calculated based on profile behavior
+        and y_max is multiplier × maximum y value
+    """
+    if not config or not hasattr(config, 'use_median_ranges') or not config.use_median_ranges:
+        return None, None  # Use original behavior
+    
+    # Determine animation type based on name
+    is_mass_animation = "mass" in animation_name.lower()
+    
+    # Process only first and last snapshots for X-axis calculation
+    snapshots_to_check = []
+    if len(snapshots) > 0:
+        snapshots_to_check.append(snapshots[0])  # First frame
+        if len(snapshots) > 1:
+            snapshots_to_check.append(snapshots[-1])  # Last frame
+    
+    max_x_candidate = 0
+    max_y = 0  # Y-axis still uses simple max across all frames
+    
+    # Calculate smart X-axis range from first/last frames
+    for snapshot in snapshots_to_check:
+        x_data = np.array(snapshot[1])  # radius data
+        y_data = np.array(snapshot[data_index])  # profile data
+        
+        if len(x_data) > 0 and len(y_data) > 0:
+            # Sort by radius to ensure proper ordering
+            sorted_indices = np.argsort(x_data)
+            x_sorted = x_data[sorted_indices]
+            y_sorted = y_data[sorted_indices]
+            
+            if is_mass_animation:
+                # For mass: find where curve rises above 97% of maximum
+                y_max = np.max(y_sorted)
+                if y_max > 0:
+                    threshold = 0.97 * y_max
+                    # Find first radius where mass exceeds threshold
+                    above_threshold = np.where(y_sorted >= threshold)[0]
+                    if len(above_threshold) > 0:
+                        radius_candidate = x_sorted[above_threshold[0]]
+                        max_x_candidate = max(max_x_candidate, radius_candidate * 1.33)
+            else:
+                # For density/psi: find where curve drops below threshold of maximum
+                y_max = np.max(y_sorted)
+                if y_max > 0:
+                    # Use 5% for psi, 3% for density
+                    if "psi" in animation_name.lower():
+                        threshold = 0.05 * y_max
+                    else:
+                        threshold = 0.03 * y_max
+                    # Find the peak location first
+                    peak_idx = np.argmax(y_sorted)
+                    
+                    # Look for drop below threshold after the peak
+                    if peak_idx < len(y_sorted) - 1:
+                        below_threshold = np.where(y_sorted[peak_idx:] < threshold)[0]
+                        if len(below_threshold) > 0:
+                            # Add peak_idx to get correct index in original array
+                            radius_candidate = x_sorted[peak_idx + below_threshold[0]]
+                            max_x_candidate = max(max_x_candidate, radius_candidate * 1.33)
+    
+    # Calculate max Y across all frames (not just first/last)
+    for snapshot in snapshots:
+        y_data = np.array(snapshot[data_index])  # profile data
+        if len(y_data) > 0:
+            max_y = max(max_y, np.max(y_data))
+    
+    # Use defaults if no valid data found
+    final_x_max = max_x_candidate if max_x_candidate > 0 else x_default_max
+    final_y_max = max_y * y_multiplier if max_y > 0 else 1.0
+    
+    # Log the calculated ranges
+    if is_mass_animation:
+        calculation_method = "97% of max"
+    elif "psi" in animation_name.lower():
+        calculation_method = "5% of max after peak"
+    else:
+        calculation_method = "3% of max after peak"
+    logger.info(f"{animation_name} animation: X range = [0, {final_x_max:.3f}] kpc ({calculation_method}), Y max = {final_y_max:.3e}")
+    
+    return (0, final_x_max), final_y_max
+
+
+def _calculate_robust_range_from_histogram(bin_centers, bin_counts, 
+                                          percentile=95.0, percentile_multiplier=1.2,
+                                          min_abs_extent=1.0,
+                                          default_if_empty=(0, 1.0), can_be_negative=False,
+                                          axis_name="axis"):
+    """
+    Calculate robust plot range from pre-binned histogram data using percentile-based scaling.
+    
+    This function reconstructs the underlying distribution from histogram bins to calculate
+    a percentile-based range that captures the bulk of the data while avoiding outliers.
+    
+    Parameters
+    ----------
+    bin_centers : array-like
+        The center values of histogram bins (e.g., radius or velocity values).
+    bin_counts : array-like
+        The count/frequency in each bin.
+    percentile : float
+        Percentile to use for determining the range extent (e.g., 95.0).
+    percentile_multiplier : float
+        Factor to multiply the percentile value by when determining the range extent.
+        Typical value: 1.2 for 20% padding beyond the percentile.
+    min_abs_extent : float, optional
+        Minimum absolute extent for the range. Default is 1.0.
+        Ensures the range is at least this wide even for very concentrated data.
+    default_if_empty : tuple, optional
+        Default (min, max) range to use if no valid data. Default is (0, 1.0).
+    can_be_negative : bool, optional
+        Whether the data can have negative values. Default is False.
+        If False, the minimum is clamped to 0.
+    axis_name : str, optional
+        Name of the axis for logging purposes. Default is "axis".
+        
+    Returns
+    -------
+    tuple
+        (min_value, max_value) representing the calculated range.
+        
+    Notes
+    -----
+    The algorithm works by:
+    1. Creating a weighted array where each bin center appears N times (N = bin count)
+    2. Calculating the specified percentile of this reconstructed distribution
+    3. Setting range as [0, percentile * multiplier] for non-negative data
+    4. Applying minimum extent constraints
+    5. Handling edge cases with appropriate defaults
+    
+    This is particularly useful for histogram data from nsphere.c where we have
+    pre-binned data but still want to apply intelligent axis scaling.
+    """
+    # Convert to numpy arrays and flatten
+    bin_centers = np.asarray(bin_centers).flatten()
+    bin_counts = np.asarray(bin_counts).flatten()
+    
+    # Validate inputs
+    if len(bin_centers) != len(bin_counts):
+        logger.warning(f"{axis_name}: Bin centers and counts have different lengths. Using defaults.")
+        return default_if_empty
+        
+    # Filter out bins with zero or negative counts
+    valid_mask = bin_counts > 0
+    valid_centers = bin_centers[valid_mask]
+    valid_counts = bin_counts[valid_mask].astype(int)
+    
+    if len(valid_centers) == 0:
+        logger.debug(f"{axis_name}: No bins with positive counts. Using defaults.")
+        return default_if_empty
+        
+    # Reconstruct the distribution by repeating each bin center by its count
+    # This gives us an array that represents the underlying distribution
+    try:
+        reconstructed_data = np.repeat(valid_centers, valid_counts)
+    except MemoryError:
+        # If too much data, sample instead
+        logger.warning(f"{axis_name}: Too much data for full reconstruction. Sampling instead.")
+        # Use weighted random sampling
+        total_counts = np.sum(valid_counts)
+        sample_size = min(1000000, total_counts)  # Sample up to 1M points
+        probabilities = valid_counts / total_counts
+        reconstructed_data = np.random.choice(valid_centers, size=sample_size, p=probabilities)
+    
+    if reconstructed_data.size == 0:
+        logger.debug(f"{axis_name}: No valid data after reconstruction. Using defaults.")
+        return default_if_empty
+        
+    # Sort the reconstructed data - necessary because filtered bin centers may not be contiguous
+    reconstructed_data = np.sort(reconstructed_data)
+    
+    # Calculate the specified percentile using direct index method
+    p_index = int(percentile / 100.0 * (len(reconstructed_data) - 1))
+    data_percentile = reconstructed_data[p_index]
+    
+    # Calculate additional statistics for logging context
+    # Now that data is sorted, we can calculate percentiles correctly
+    median_index = int(0.5 * (len(reconstructed_data) - 1))
+    data_median = reconstructed_data[median_index]
+    
+    # Calculate 25th and 75th percentiles for IQR
+    p25_index = int(0.25 * (len(reconstructed_data) - 1))
+    p75_index = int(0.75 * (len(reconstructed_data) - 1))
+    p25 = reconstructed_data[p25_index]
+    p75 = reconstructed_data[p75_index]
+    
+    # Calculate the range based on percentile
+    if can_be_negative:
+        # For data that can be negative, use percentile for both sides
+        max_abs_val = data_percentile * percentile_multiplier
+        min_val = -max_abs_val
+        max_val = max_abs_val
+    else:
+        # For non-negative data (like radius), start from 0
+        min_val = 0
+        max_val = max(data_percentile * percentile_multiplier, min_abs_extent)
+        
+    # Log the statistics
+    logger.info(f"{axis_name} histogram statistics: {percentile:.0f}th percentile={data_percentile:.3f}, "
+                f"median={data_median:.3f}, IQR=[{p25:.3f}, {p75:.3f}], range=[{min_val:.3f}, {max_val:.3f}]")
+    
+    return (min_val, max_val)
+
 
 def filter_finite_rows(*arrs):
     """
@@ -1222,13 +1720,16 @@ def get_snapshot_number(filename, pattern=None):
     that follow a pattern like "Rank_Mass_Rad_VRad_sorted_t00012". Returns a large
     value for non-matching files to ensure they sort after valid snapshot files.
     """
+    global suffix
     if pattern is None:
-        pattern = re.compile(r'Rank_Mass_Rad_VRad_sorted_t(\d+)')
+        # Build a pattern that correctly handles the suffix
+        pattern_str = r'Rank_Mass_Rad_VRad_sorted_t(\d+)' + re.escape(suffix) + r'\.dat$'
+        pattern = re.compile(pattern_str)
 
     match = pattern.search(filename)
     if match:
         return int(match.group(1))
-    return 999999999  # Default high value for non-matching files
+    return 999999999
 
 def get_file_prefix(filepath):
     """
@@ -1931,7 +2432,7 @@ def safe_load_particle_ids_bin(filename, ncols, particle_ids, dtype=np.float32):
     finally:
         gc.collect()
 
-def plot_density(r_values, rho_values, output_file="density_profile.png"):
+def plot_density(r_values, rho_values, output_file=None):
     """
     Plot density profile as a function of radius and save to file.
 
@@ -1956,22 +2457,41 @@ def plot_density(r_values, rho_values, output_file="density_profile.png"):
     appropriate labels and grid.
     """
     r_values, rho_values = filter_finite_rows(r_values, rho_values)
-    plt.figure(figsize=(10, 6))
-    plt.plot(r_values, rho_values, linewidth=2, label=r'$\rho(r)$')
-    plt.xlabel(r'$r$ (kpc)', fontsize=12)
-    plt.ylabel(r'$\rho(r)$ (M$_{\odot}$/kpc$^3$)', fontsize=12)
-    plt.title(r'Radial Density Profile $\rho(r)$', fontsize=14)
-    plt.legend(fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=200)
-    plt.close()
+    
+    # Filter for positive values only for log scale
+    positive_mask = (r_values > 0) & (rho_values > 0)
+    if np.any(positive_mask):
+        r_pos = r_values[positive_mask]
+        rho_pos = rho_values[positive_mask]
+        
+        plt.figure(figsize=(10, 6))
+        plt.loglog(r_pos, rho_pos, linewidth=2, label=r'$\rho(r)$')
+        plt.xlabel(r'$r$ (kpc)', fontsize=12)
+        plt.ylabel(r'$\rho(r)$ (M$_{\odot}$/kpc$^3$)', fontsize=12)
+        plt.title(r'Radial Density Profile $\rho(r)$ (Log-Log)', fontsize=14)
+        plt.legend(fontsize=12)
+        plt.grid(True, which='both', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        if output_file is None:
+            output_file = f"results/density_profile{suffix}.png"
+        plt.savefig(output_file, dpi=200)
+        plt.close()
+    else:
+        # Fallback to empty plot if no valid data
+        plt.figure(figsize=(10, 6))
+        plt.text(0.5, 0.5, 'No valid data for log-log plot', 
+                 transform=plt.gca().transAxes, ha='center', va='center')
+        plt.title(r'Radial Density Profile $\rho(r)$ (Log-Log)', fontsize=14)
+        if output_file is None:
+            output_file = f"results/density_profile{suffix}.png"
+        plt.savefig(output_file, dpi=200)
+        plt.close()
 
     
     log_plot_saved(output_file)
     return output_file
 
-def plot_mass_enclosed(r_values, mass_values, output_file="mass_enclosed.png"):
+def plot_mass_enclosed(r_values, mass_values, output_file=None):
     """
     Plot enclosed mass as a function of radius and save to file.
 
@@ -2003,14 +2523,16 @@ def plot_mass_enclosed(r_values, mass_values, output_file="mass_enclosed.png"):
     plt.legend(fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
+    if output_file is None:
+        output_file = f"results/mass_enclosed{suffix}.png"
     plt.savefig(output_file, dpi=150)
     plt.close()
 
-    
+
     log_plot_saved(output_file)
     return output_file
 
-def plot_psi(r_values, psi_values, output_file="psi_profile.png"):
+def plot_psi(r_values, psi_values, output_file=None):
     """
     Plot gravitational potential (Psi) as a function of radius and save to file.
 
@@ -2044,6 +2566,8 @@ def plot_psi(r_values, psi_values, output_file="psi_profile.png"):
     plt.legend(fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
+    if output_file is None:
+        output_file = f"results/psi_profile{suffix}.png"
     plt.savefig(output_file, dpi=150)
     plt.close()
 
@@ -2111,16 +2635,31 @@ def plot_drho_dpsi(psi_values, drho_dpsi, output_file="drho_dpsi.png"):
     """
 
     psi_values, drho_dpsi = filter_finite_rows(psi_values, drho_dpsi)
-    plt.figure(figsize=(10, 6))
-    plt.plot(psi_values, drho_dpsi, label=r'$d\rho/d\Psi$')
-    plt.xlabel(r'$\Psi$ (km$^2$/s$^2$)', fontsize=12)
-    plt.ylabel(r'$d\rho/d\Psi$ ((M$_\odot$/kpc$^3$)/(km$^2$/s$^2$))', fontsize=12)
-    plt.title(r'Density Derivative $d\rho/d\Psi$', fontsize=14)
-    plt.legend(fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=150)
-    plt.close()
+
+    # Filter for positive values only for log scale
+    positive_mask = (psi_values > 0) & (drho_dpsi > 0)
+    if np.any(positive_mask):
+        psi_pos = psi_values[positive_mask]
+        drho_dpsi_pos = drho_dpsi[positive_mask]
+
+        plt.figure(figsize=(10, 6))
+        plt.loglog(psi_pos, drho_dpsi_pos, label=r'$d\rho/d\Psi$')
+        plt.xlabel(r'$\Psi$ (km$^2$/s$^2$)', fontsize=12)
+        plt.ylabel(r'$d\rho/d\Psi$ ((M$_\odot$/kpc$^3$)/(km$^2$/s$^2$))', fontsize=12)
+        plt.title(r'Density Derivative $d\rho/d\Psi$ (Log-Log)', fontsize=14)
+        plt.legend(fontsize=12)
+        plt.grid(True, which='both', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(output_file, dpi=150)
+        plt.close()
+    else:
+        # Fallback to empty plot if no valid data
+        plt.figure(figsize=(10, 6))
+        plt.text(0.5, 0.5, 'No valid data for log-log plot',
+                 transform=plt.gca().transAxes, ha='center', va='center')
+        plt.title(r'Density Derivative $d\rho/d\Psi$ (Log-Log)', fontsize=14)
+        plt.savefig(output_file, dpi=150)
+        plt.close()
 
 def plot_f_of_E(E_values, f_values, output_file="f_of_E.png"):
     """
@@ -2145,16 +2684,32 @@ def plot_f_of_E(E_values, f_values, output_file="f_of_E.png"):
     Filters out any non-finite values before plotting.
     Creates a figure showing the distribution function (f(E)) as a
     function of energy with appropriate labels and grid.
+    Uses log-log scale for better visualization.
     """
 
     E_values, f_values = filter_finite_rows(E_values, f_values)
-    plt.figure(figsize=(10, 6))
-    plt.plot(E_values, f_values, linewidth=2, label=r'$f(\mathcal{E})$')
-    plt.xlabel(r'$\mathcal{E}$ (km$^2$/s$^2$)', fontsize=12)
-    plt.ylabel(r'$f(\mathcal{E})$ ((km/s)$^{-3}$ kpc$^{-3}$)', fontsize=12)
-    plt.title(r'Distribution Function $f(\mathcal{E})$', fontsize=14)
-    plt.legend(fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
+    
+    # Filter out zero or negative values for log-log plot
+    mask = (E_values > 0) & (f_values > 0)
+    E_values = E_values[mask]
+    f_values = f_values[mask]
+    
+    if len(E_values) == 0:
+        logger.warning("No positive values to plot for f_of_E")
+        return output_file
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(E_values, f_values, linewidth=2, label=r'$f(\mathcal{E})$')
+    ax.set_xlabel(r'$\mathcal{E}$ (km$^2$/s$^2$)', fontsize=12)
+    ax.set_ylabel(r'$f(\mathcal{E})$ ((km/s)$^{-3}$ kpc$^{-3}$)', fontsize=12)
+    ax.set_title(r'Distribution Function $f(\mathcal{E})$', fontsize=14)
+    ax.legend(fontsize=12)
+    ax.grid(True, linestyle='--', alpha=0.7, which='both')
+    
+    # Set log-log scale
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    
     plt.tight_layout()
     plt.savefig(output_file, dpi=200)
     plt.close()
@@ -2173,8 +2728,8 @@ def plot_df_at_fixed_radius(v_values, df_values, r_fixed, output_file="df_fixed_
         Velocity values
     df_values : array-like
         Distribution function values
-    r_fixed : float
-        The fixed radius value in kpc
+    r_fixed : float or str
+        The fixed radius value in kpc, or a string like "2r_s" for r_F = 2×scale_radius
     output_file : str, optional
         Path to save the output plot, by default "df_fixed_radius.png"
 
@@ -2204,14 +2759,48 @@ def plot_df_at_fixed_radius(v_values, df_values, r_fixed, output_file="df_fixed_
         logger.error("df_fixed_radius: No valid data points after filtering")
         return None
 
+    # Convert velocity from simulation units (kpc/Myr) to km/s
+    kmsec_to_kpcmyr = 1.02271e-3
+    v_values_kms = v_values / kmsec_to_kpcmyr
+
+    # Calculate speed distribution P(v|r=r_F) by normalizing
+    # Integrate over velocity to get normalization factor
+    # Use trapezoidal rule for integration
+    if len(v_values_kms) > 1:
+        # Sort by velocity for proper integration
+        sort_indices = np.argsort(v_values_kms)
+        v_sorted = v_values_kms[sort_indices]
+        f_sorted = df_values[sort_indices]
+        
+        # Integrate using trapezoidal rule: ∫ f(v) dv
+        normalization = np.trapezoid(f_sorted, v_sorted)
+        
+        if normalization > 0:
+            # Normalize to get speed distribution P(v|r_F) with units km/s^(-1)
+            speed_dist = df_values / normalization
+        else:
+            # Fallback if normalization fails
+            speed_dist = df_values
+            logger.warning("Normalization failed for speed distribution, using raw values")
+    else:
+        speed_dist = df_values
+        logger.warning("Insufficient data points for normalization")
+
     # Use a simpler single-panel plot
     plt.figure(figsize=(10, 6))
 
     
-    plt.plot(v_values, df_values, linewidth=2, label=r'$f$ at $r_{\mathrm{fixed}} = ' + f'{r_fixed:.1f}' + r'$ kpc')
+    # Format the radius label based on whether it's numeric or string
+    if isinstance(r_fixed, str):
+        r_label = r_fixed.replace('r_s', r'r_s')  # Format for LaTeX
+        plt.plot(v_values_kms, speed_dist, linewidth=2, label=r'$P(v|r_F = ' + r_label + r')$')
+        plt.title(r'Speed Distribution at Fixed Radius ($r_F = ' + r_label + r'$)', fontsize=14)
+    else:
+        plt.plot(v_values_kms, speed_dist, linewidth=2, label=r'$P(v|r_F = ' + f'{r_fixed:.1f}' + r'$ kpc)')
+        plt.title(r'Speed Distribution at Fixed Radius ($r_F = ' + f'{r_fixed:.1f}' + r'$ kpc)', fontsize=14)
+    
     plt.xlabel(r'$v$ (km/s)', fontsize=12)
-    plt.ylabel(r'$f(\mathcal{E},r)$ ((km/s)$^{-3}$ kpc$^{-3}$)', fontsize=12)
-    plt.title(r'Distribution Function at Fixed Radius ($r_{\mathrm{fixed}} = ' + f'{r_fixed:.1f}' + r'$ kpc)', fontsize=14)
+    plt.ylabel(r'$P(v|r_F)$ (km/s)$^{-1}$', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.legend(fontsize=12)
     plt.tight_layout()
@@ -2224,7 +2813,72 @@ def plot_df_at_fixed_radius(v_values, df_values, r_fixed, output_file="df_fixed_
     log_plot_saved(output_file)
     return output_file
 
-def plot_combined_histogram_from_file(input_file, output_file):
+def plot_tangential_velocity_histogram(v_perp_data_initial, v_perp_data_final, output_file="tangential_velocity_histogram_compare.png", plot_range=None):
+    """
+    Plot a comparison of initial and final tangential velocity distributions.
+
+    Parameters
+    ----------
+    v_perp_data_initial : array-like
+        Array of initial tangential velocity magnitudes (km/s).
+    v_perp_data_final : array-like
+        Array of final tangential velocity magnitudes (km/s).
+    output_file : str, optional
+        Path to save the output plot.
+    plot_range : tuple, optional
+        Tuple (min, max) for the x-axis range of the histogram. Auto-ranged if None.
+
+    Returns
+    -------
+    str
+        Path to the saved plot file.
+    """
+    plt.figure(figsize=(10, 6))
+    bins = 100  # Or another appropriate number
+
+    # Filter NaN/Inf values independently for initial and final, as they come from different processing steps
+    v_perp_data_initial = v_perp_data_initial[np.isfinite(v_perp_data_initial)]
+    v_perp_data_final = v_perp_data_final[np.isfinite(v_perp_data_final)]
+
+    if len(v_perp_data_initial) == 0 and len(v_perp_data_final) == 0:
+        logger.warning(f"No valid data for tangential velocity histogram. Skipping plot: {output_file}")
+        plt.close()
+        return None
+
+    # Determine common range if not specified, considering both datasets
+    if plot_range is None:
+        combined_data = np.array([])
+        if len(v_perp_data_initial) > 0:
+            combined_data = np.concatenate((combined_data, v_perp_data_initial))
+        if len(v_perp_data_final) > 0:
+            combined_data = np.concatenate((combined_data, v_perp_data_final))
+        
+        if len(combined_data) > 0:
+            plot_range = (0, np.percentile(combined_data, 99.5)) # Start from 0, go to 99.5th percentile
+            if plot_range[1] <= plot_range[0]: # Ensure max > min
+                plot_range = (0, plot_range[1] + 1 if plot_range[1] > 0 else 1)
+        else:
+            plot_range = (0, 100) # Fallback range
+
+    if len(v_perp_data_initial) > 0:
+        plt.hist(v_perp_data_initial, bins=bins, range=plot_range, alpha=0.6, color='blue', label=r'Initial $v_{\perp}$', density=True)
+    if len(v_perp_data_final) > 0:
+        plt.hist(v_perp_data_final, bins=bins, range=plot_range, alpha=0.6, color='red', label=r'Final $v_{\perp}$', density=True)
+
+    plt.xlabel(r'$v_{\perp}$ (km/s)', fontsize=12)
+    plt.ylabel('Normalized Frequency', fontsize=12)
+    plt.title(r'Comparison of Tangential Velocity Magnitude Distribution $N(v_{\perp})$', fontsize=14)
+    if len(v_perp_data_initial) > 0 or len(v_perp_data_final) > 0: # Only add legend if there's data
+        plt.legend(fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.savefig(output_file, dpi=150)
+    plt.close()
+    
+    # Note: log_plot_saved will be called by the calling function (process_variable_histograms)
+    return output_file
+
+def plot_combined_histogram_from_file(input_file, output_file, config=None):
     """
     Create an overlay histogram comparing initial and final radial distributions.
 
@@ -2234,6 +2888,9 @@ def plot_combined_histogram_from_file(input_file, output_file):
         Path to the input data file containing combined histogram data
     output_file : str
         Path to save the output plot
+    config : Configuration, optional
+        Configuration object containing plot settings. If provided,
+        enables robust dynamic ranging for axes.
 
     Returns
     -------
@@ -2270,6 +2927,23 @@ def plot_combined_histogram_from_file(input_file, output_file):
 
     bin_width = bin_centers[1]-bin_centers[0] if len(bin_centers) > 1 else 1.0
 
+    # Calculate robust range for X-axis if config enables it
+    if config and hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+        # Reconstruct radius distribution from histogram data
+        combined_counts = hist_iradii + hist_fradii
+        r_min, r_max = _calculate_robust_range_from_histogram(
+            bin_centers, combined_counts,
+            percentile=config.x_percentile,
+            percentile_multiplier=config.x_percentile_multiplier,
+            min_abs_extent=config.min_x_range_abs,
+            default_if_empty=(0, 250.0),
+            can_be_negative=False,
+            axis_name="combined radial histogram"
+        )
+        x_range = [r_min, r_max]
+    else:
+        x_range = None  # Auto-range
+
     plt.figure(figsize=(10, 6))
     plt.bar(bin_centers, overlap, width=bin_width,
             color='purple', label='Overlap', align='center')
@@ -2283,6 +2957,11 @@ def plot_combined_histogram_from_file(input_file, output_file):
     plt.title(r'Comparison of Initial and Final Radial Distributions $N(r)$', fontsize=14)
     plt.legend(fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
+    
+    # Apply robust ranging if calculated
+    if x_range is not None:
+        plt.xlim(x_range[0], x_range[1])
+    
     plt.tight_layout()
     plt.savefig(output_file, dpi=200)
     plt.close()
@@ -2522,9 +3201,9 @@ def plot_angular_momentum_time(input_file, output_file):
     log_plot_saved(output_file)
     return output_file
 
-def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", output_file="lowestl_3panel.png"):
+def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", output_file="lowestl_3panel.png", file_prefix="lowestl"):
     """
-    Create a 3-panel plot showing trajectories of particles with lowest angular momentum.
+    Create a 3-panel plot showing trajectories of selected particles.
 
     Parameters
     ----------
@@ -2533,6 +3212,8 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
         Default is "lowest_l_trajectories.dat".
     output_file : str, optional
         Path to save the output plot. Default is "lowestl_3panel.png".
+    file_prefix : str, optional
+        Prefix to use for labeling ("lowestl" or "chosenl").
 
     Returns
     -------
@@ -2547,6 +3228,10 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
     1) Radii vs. time for each particle
     2) Energies vs. time for each particle
     3) Percentage deviation from average energy vs. time for each particle
+
+    Label changes based on file type:
+    - "Lowest" for lowest_l files
+    - "Chosen" for chosen_l files
     """
 
     # Load the data
@@ -2573,25 +3258,35 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
     ax_e = axes[1]
     ax_dev = axes[2]
 
+    # Determine label text based on file prefix
+    label_descriptor = "Chosen" if file_prefix == "chosenl" else "Lowest"
+
+    # Extract initial L values from first timestep for legend
+    initial_L_values = []
+    for p in range(nlowest):
+        L_col = 3 + 3*p  # L is the third of each triplet
+        initial_L = data[0, L_col] if data.shape[0] > 0 else 0.0
+        initial_L_values.append(initial_L)
+
     # 1) Radii vs. time
     for p in range(nlowest):
         r_col = 1 + 3*p  # r is the first of each triplet
-        ax_r.plot(time, data[:, r_col], label=f"Particle {p+1}")
+        ax_r.plot(time, data[:, r_col], label=f"P{p+1} ($\\ell_0$={initial_L_values[p]:.3f})")
     ax_r.set_xlabel(r"$t$ (Myr)", fontsize=12)
     ax_r.set_ylabel(r"$r$ (kpc)", fontsize=12)
-    ax_r.set_title(r"Radius vs. Time (Lowest $\ell$)", fontsize=14)
-    ax_r.legend(fontsize=10)
+    ax_r.set_title(rf"Radius vs. Time ({label_descriptor} $\ell$)", fontsize=14)
+    ax_r.legend(fontsize=9)
     ax_r.grid(True)
 
     # 2) Energies vs. time
     #   second of each triplet is the energy
     for p in range(nlowest):
         e_col = 2 + 3*p
-        ax_e.plot(time, data[:, e_col], label=fr"$\mathcal{{E}}$ P{p+1}")
+        ax_e.plot(time, data[:, e_col], label=f"P{p+1} ($\\ell_0$={initial_L_values[p]:.3f})")
     ax_e.set_xlabel(r"$t$ (Myr)", fontsize=12)
     ax_e.set_ylabel(r"$\mathcal{E}$ (km$^2$/s$^2$)", fontsize=12)
-    ax_e.set_title(r"Energy vs. Time (Lowest $\ell$)", fontsize=14)
-    ax_e.legend(fontsize=10)
+    ax_e.set_title(rf"Energy vs. Time ({label_descriptor} $\ell$)", fontsize=14)
+    ax_e.legend(fontsize=9)
     ax_e.grid(True)
 
     # 3) % deviation from average energy
@@ -2606,11 +3301,11 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
         # average of that particle's energy over time
         single_mean = np.mean(energies[:, p])
         pct_dev = (energies[:, p] - single_mean) / single_mean * 100.0
-        ax_dev.plot(time, pct_dev, label=f"P{p+1}")
+        ax_dev.plot(time, pct_dev, label=f"P{p+1} ($\\ell_0$={initial_L_values[p]:.3f})")
     ax_dev.set_xlabel(r"$t$ (Myr)", fontsize=12)
     ax_dev.set_ylabel(r"$\Delta\mathcal{E}/\langle\mathcal{E}\rangle$ (%)", fontsize=12)
-    ax_dev.set_title(r"Energy Deviation (Lowest $\ell$)", fontsize=14)
-    ax_dev.legend(fontsize=10)
+    ax_dev.set_title(rf"Energy Deviation ({label_descriptor} $\ell$)", fontsize=14)
+    ax_dev.legend(fontsize=9)
     ax_dev.grid(True)
 
     # Save & close figure
@@ -2921,6 +3616,15 @@ class Configuration:
 
         # Parameter display is centralized in the main function banner
 
+        # Configure percentile-based robust ranging system
+        self.use_median_ranges = True  # Enable by default (now uses percentiles)
+        self.x_percentile = 95.0        # Use 95th percentile for X-axis
+        self.y_percentile = 95.0        # Use 95th percentile for Y-axis
+        self.x_percentile_multiplier = 1.2  # Multiplier for percentile value
+        self.y_percentile_multiplier = 1.65  # Multiplier for percentile value
+        self.min_x_range_abs = 10.0     # Minimum radius range extent (kpc)
+        self.min_y_range_abs = 20.0     # Minimum velocity range extent (km/s)
+
         # Extract parameters from suffix for compatibility with existing code
         self._extract_params_from_suffix()
 
@@ -2942,56 +3646,46 @@ class Configuration:
         These parameters are used throughout the code for file paths,
         plot labels, and determining output filenames.
         """
-        parts = self.suffix.strip('_').split('_')
-
-        # Default values
-        self.npts = 30000
-        self.Ntimes = 1001
-        self.tfinal_factor = 5
-        self.file_tag = ""
-
-        if len(parts) >= 3:
-            try:
-                # The last three parts should always be npts, Ntimes, tfinal_factor
-                self.npts = int(parts[-3])
-                self.Ntimes = int(parts[-2])
-                self.tfinal_factor = int(parts[-1])
-
-                # The file_tag is everything before the last three parts
-                if len(parts) > 3:
-                    # Join any remaining parts as the file_tag
-                    self.file_tag = '_'.join(parts[:-3])
-            except (ValueError, IndexError):
-                # Fallback if parsing fails, read from lastparams.dat
-                self.npts, self.Ntimes, self.tfinal_factor, self.file_tag = read_lastparams(return_suffix=False)
-        else:
-            # Fallback to reading from lastparams.dat
-            self.npts, self.Ntimes, self.tfinal_factor, self.file_tag = read_lastparams(return_suffix=False)
-
-        # If command-line suffix was provided, keep it as-is; otherwise use the reconstructed one
-        if not self.args.suffix:
-            # Rebuild suffix to ensure consistency
+        # First, try to read parameters from the corresponding lastparams file
+        # This is the most reliable source of truth for the parameters.
+        try:
+            self.npts, self.Ntimes, self.tfinal_factor, self.file_tag = read_lastparams(
+                user_suffix=self.suffix, return_suffix=False
+            )
+            # Reconstruct the suffix from the authoritative source to ensure consistency
             if self.file_tag:
                 self.suffix = f"_{self.file_tag}_{self.npts}_{self.Ntimes}_{self.tfinal_factor}"
             else:
                 self.suffix = f"_{self.npts}_{self.Ntimes}_{self.tfinal_factor}"
 
+            logger.info(f"Successfully loaded parameters for suffix '{self.suffix}' from its lastparams file.")
+
+        except SystemExit:
+            # Fallback to parsing the suffix string itself if lastparams<suffix>.dat doesn't exist
+            logger.warning(f"Could not find lastparams file for suffix '{self.suffix}'. Falling back to parsing suffix string.")
+            parts = self.suffix.strip('_').rsplit('_', 3)
+
+            try:
+                if len(parts) == 4: # Format: _tag_npts_ntimes_tfinal
+                    self.file_tag, npts_str, ntimes_str, tfinal_str = parts
+                elif len(parts) == 3: # Format: _npts_ntimes_tfinal
+                    self.file_tag = ""
+                    npts_str, ntimes_str, tfinal_str = parts
+                else:
+                    raise ValueError("Suffix does not match expected format.")
+
+                self.npts = int(npts_str)
+                self.Ntimes = int(ntimes_str)
+                self.tfinal_factor = int(tfinal_str)
+                logger.info(f"Parsed parameters from suffix string: npts={self.npts}, tag='{self.file_tag}'")
+            except (ValueError, IndexError):
+                print(f"Error: Suffix '{self.suffix}' is malformed and its lastparams file was not found.")
+                sys.exit(1)
+
     def setup_file_paths(self):
         """
         Generate a dictionary mapping file types to their full file paths.
-
-        Returns
-        -------
-        dict
-            Dictionary where keys are file type identifiers (e.g., "particles",
-            "density_profile") and values are the corresponding file paths with
-            the configured suffix.
-
-        Notes
-        -----
-        This method constructs paths for all possible data files that might be
-        used in the visualization process. The actual existence of these files
-        is checked later when they are accessed.
+        All filenames now correctly include the suffix.
         """
         return {
             "particles": f"data/particles{self.suffix}.dat",
@@ -3011,7 +3705,9 @@ class Configuration:
             "hist_init": f"data/2d_hist_initial{self.suffix}.dat",
             "hist_final": f"data/2d_hist_final{self.suffix}.dat",
             "lowest_l_trajectories": f"data/lowest_l_trajectories{self.suffix}.dat",
-            "debug_energy_compare": f"data/debug_energy_compare{self.suffix}.dat"
+            "debug_energy_compare": f"data/debug_energy_compare{self.suffix}.dat",
+            "total_energy_vs_time": f"data/total_energy_vs_time{self.suffix}.dat",
+            "lowest_radius_ids": f"data/lowest_radius_ids{self.suffix}.dat" # Added for energy plots
         }
 
     def only_specific_visualizations(self):
@@ -3055,6 +3751,136 @@ class Configuration:
 
         return (self.args.animations or self.args.energy_plots or
                 (not only_flags_active and (not self.args.no_animations or not self.args.no_energy_plots)))
+
+def plot_total_energy_diagnostics(input_file, output_file="results/total_energy_diagnostics.png"):
+    """
+    Create a three-panel diagnostic plot for total system energy conservation.
+    
+    Panel 1: Absolute values of KE, PE, and Total Energy vs time
+    Panel 2: Percent change from initial values for all three quantities (auto-scaled)
+    Panel 3: Percent change of total energy only (zoomed in for detail)
+    
+    Parameters
+    ----------
+    input_file : str
+        Path to the total_energy_vs_time binary file from nsphere
+    output_file : str
+        Path to save the output plot (PNG format)
+    
+    Returns
+    -------
+    str or None
+        Path to the saved plot file, or None if plotting failed
+    """
+    import struct
+    
+    if not os.path.exists(input_file):
+        logger.warning(f"Total energy file {input_file} does not exist")
+        return None
+    
+    try:
+        # Read the binary file
+        with open(input_file, 'rb') as f:
+            data = f.read()
+        
+        # The file is pure binary - fprintf_bin ignores the header string
+        # because it has no format specifiers (%f, %g, etc.)
+        # Data starts at byte 0: 5 floats per row (time, KE, PE, total_E, frac_change)
+        
+        # Parse binary data
+        num_floats = len(data) // 4
+        if num_floats % 5 != 0:
+            logger.warning(f"Data size mismatch in {input_file}: {num_floats} floats, expected multiple of 5")
+            # Try to proceed with what we have
+            num_floats = (num_floats // 5) * 5
+        
+        values = struct.unpack(f'{num_floats}f', data[:num_floats*4])
+        
+        # Reshape into rows
+        nrows = num_floats // 5
+        if nrows == 0:
+            logger.warning(f"No valid data rows in {input_file}")
+            return None
+        
+        # Extract columns
+        time = np.array([values[i*5] for i in range(nrows)])
+        total_ke = np.array([values[i*5+1] for i in range(nrows)])
+        total_pe = np.array([values[i*5+2] for i in range(nrows)])
+        total_e = np.array([values[i*5+3] for i in range(nrows)])
+        
+        # Calculate mean values for percent change calculation
+        ke_mean = np.mean(total_ke)
+        pe_mean = np.mean(total_pe)
+        e_mean = np.mean(total_e)
+        
+        # Calculate percent changes from mean
+        ke_percent = 100.0 * (total_ke - ke_mean) / np.abs(ke_mean) if ke_mean != 0 else np.zeros_like(total_ke)
+        pe_percent = 100.0 * (total_pe - pe_mean) / np.abs(pe_mean) if pe_mean != 0 else np.zeros_like(total_pe)
+        e_percent = 100.0 * (total_e - e_mean) / np.abs(e_mean) if e_mean != 0 else np.zeros_like(total_e)
+        
+        # Create the three-panel figure
+        fig, axes = plt.subplots(3, 1, figsize=(10, 12))
+        
+        # Panel 1: True energy values (not absolute)
+        ax1 = axes[0]
+        ax1.plot(time, total_ke, 'r-', linewidth=2, label='Kinetic Energy', alpha=0.8)
+        ax1.plot(time, total_pe, 'b-', linewidth=2, label='Potential Energy', alpha=0.8)
+        ax1.plot(time, total_e, 'k-', linewidth=2.5, label='Total Energy')
+        
+        ax1.set_xlabel('Time (Myr)', fontsize=12)
+        ax1.set_ylabel('Energy (code units)', fontsize=12)
+        ax1.set_title('System Energy Evolution', fontsize=14, fontweight='bold')
+        ax1.legend(loc='best', fontsize=10)
+        ax1.grid(True, alpha=0.3, linestyle='--')
+        ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+        
+        # Panel 2: Percent change of all quantities from mean (auto-scaled)
+        ax2 = axes[1]
+        ax2.plot(time, ke_percent, 'r-', linewidth=2, label='KE % from mean', alpha=0.8)
+        ax2.plot(time, pe_percent, 'b-', linewidth=2, label='PE % from mean', alpha=0.8)
+        ax2.plot(time, e_percent, 'k-', linewidth=2.5, label='Total E % from mean')
+        
+        ax2.set_xlabel('Time (Myr)', fontsize=12)
+        ax2.set_ylabel('% Change from Mean', fontsize=12)
+        ax2.set_title('Relative Energy Changes from Mean', fontsize=14, fontweight='bold')
+        ax2.legend(loc='best', fontsize=10)
+        ax2.grid(True, alpha=0.3, linestyle='--')
+        ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+        
+        # Panel 3: Total energy percent change from mean (zoomed)
+        ax3 = axes[2]
+        ax3.plot(time, e_percent, 'k-', linewidth=2.5, label='Total Energy % from mean')
+        
+        ax3.set_xlabel('Time (Myr)', fontsize=12)
+        ax3.set_ylabel('% Change in Total Energy from Mean', fontsize=12)
+        ax3.set_title('Total Energy Conservation Detail', fontsize=14, fontweight='bold')
+        ax3.grid(True, alpha=0.3, linestyle='--')
+        ax3.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+        
+        # Set y-axis limits for better visibility
+        max_e_var = np.max(np.abs(e_percent))
+        y_margin = max(0.001, max_e_var * 1.2)  # At least 0.001% margin
+        ax3.set_ylim(-y_margin, y_margin)
+        
+        ax3.legend(loc='best', fontsize=9)
+        
+        # Overall figure adjustments
+        fig.suptitle('Total System Energy Diagnostics', 
+                    fontsize=16, fontweight='bold', y=0.995)
+        plt.tight_layout(rect=[0, 0, 1, 0.99])
+        
+        # Save the plot
+        plt.savefig(output_file, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        
+        logger.info(f"Total energy diagnostics plot saved to {output_file}")
+        return output_file
+        
+    except Exception as e:
+        logger.error(f"Error creating total energy diagnostics plot: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 def parse_arguments():
     """
@@ -3113,7 +3939,7 @@ def setup_file_paths(suffix):
 
     return temp_config.setup_file_paths()
 
-def process_profile_plots(file_paths):
+def process_profile_plots(file_paths, config=None):
     """
     Process various profile data files and generate plots.
 
@@ -3121,6 +3947,9 @@ def process_profile_plots(file_paths):
     ----------
     file_paths : dict
         Dictionary of file paths for various data files.
+    config : Configuration, optional
+        Configuration object containing plot settings. If provided,
+        enables robust dynamic ranging for plots.
     """
     global suffix
 
@@ -3280,10 +4109,10 @@ def process_profile_plots(file_paths):
             elif plot_type == "f_of_E":
                 plot_f_of_E(x_data, y_data, output_file)
             elif plot_type == "df_fixed":
-                # Use a fixed radius of 200.0 kpc
-                plot_df_at_fixed_radius(x_data, y_data, 200.0, output_file)
+                # Use 2×scale_radius (the actual radius is determined by C code)
+                plot_df_at_fixed_radius(x_data, y_data, "2r_s", output_file)
             elif plot_type == "combined":
-                plot_combined_histogram_from_file(x_data, output_file)
+                plot_combined_histogram_from_file(x_data, output_file, config)
 
             # Log to file and update console display with progress
             log_plot_saved(output_file, current=i, total=total_plots)
@@ -3406,28 +4235,48 @@ def process_trajectory_plots(file_paths):
     else:
         logger.warning(f"Single trajectory file {file_paths['single_trajectory']} not found, skipping.")
 
-    # Lowest L 3-panel - check and load
-    logger.info(f"Loading lowest L trajectories data from {file_paths['lowest_l_trajectories']}")
+    # Lowest L or Chosen L 3-panel - check for both, prioritize chosen_l
+    chosen_l_file = f"data/chosen_l_trajectories{suffix}.dat"
+    lowest_l_file = file_paths["lowest_l_trajectories"]
+
+    actual_input_file = None
+    file_prefix_for_plot = "lowestl"
+
+    if os.path.exists(chosen_l_file):
+        actual_input_file = chosen_l_file
+        file_prefix_for_plot = "chosenl"
+        logger.info(f"Loading chosen L trajectories data from {chosen_l_file}")
+    elif os.path.exists(lowest_l_file):
+        actual_input_file = lowest_l_file
+        file_prefix_for_plot = "lowestl"
+        logger.info(f"Loading lowest L trajectories data from {lowest_l_file}")
+
     update_combined_progress("trajectory_data_loading", "loading_lowest_l_trajectories")
-    if os.path.exists(file_paths["lowest_l_trajectories"]):
-        lowest_l_output = f"results/lowestL_3panel{suffix}.png"
-        prepared_plots.append(("lowest_l", file_paths["lowest_l_trajectories"], lowest_l_output))
+
+    if actual_input_file:
+        output_filename = f"results/{file_prefix_for_plot}_3panel{suffix}.png"
+        prepared_plots.append(("lowest_l", actual_input_file, output_filename, file_prefix_for_plot))
     else:
-        logger.warning(f"Lowest L trajectories file {file_paths['lowest_l_trajectories']} not found, skipping.")
+        logger.warning(f"Neither chosen_l nor lowest_l trajectories file found, skipping.")
 
     # Energy and angular momentum data - check and load
     logger.info(f"Loading energy and angular momentum data from {file_paths['energy_and_angular_momentum']}")
     update_combined_progress("trajectory_data_loading", "loading_energy_angular_momentum")
 
     # Generate trajectory plots using the combined progress tracker
-    for plot_type, input_file, output_file in prepared_plots:
+    for item in prepared_plots:
+        plot_type = item[0]
+        input_file = item[1]
+        output_file = item[2]
+        prefix = item[3] if len(item) > 3 else None
+
         try:
             if plot_type == "trajectories":
                 plot_trajectories(input_file, output_file)
             elif plot_type == "single":
                 plot_single_trajectory(input_file, output_file)
             elif plot_type == "lowest_l":
-                plot_lowestL_trajectories_3panel(input_file, output_file)
+                plot_lowestL_trajectories_3panel(input_file, output_file, file_prefix=prefix)
 
             # Update the combined progress tracker (shared with energy plots)
             update_combined_progress("trajectory_plots", output_file)
@@ -3493,21 +4342,25 @@ def render_mass_frame(frame_data):
     Parameters
     ----------
     frame_data : tuple 
-        Tuple containing (snapshot_data, tfinal_factor, total_frames, r_max, project_root_path) where
-        snapshot_data is the (snap, radius, mass) tuple from mass_snapshots.
+        Tuple containing (snapshot_data, tfinal_factor, total_frames, r_range, m_range, project_root_path) where:
+        - snapshot_data is the (snap, radius, mass) tuple from mass_snapshots
+        - r_range is (r_min, r_max) tuple for x-axis
+        - m_range is (m_min, m_max) tuple for y-axis
 
     Returns
     -------
     numpy.ndarray
         Image data for the rendered frame.
     """
-    # Access only mass_max_value from globals, not mass_snapshots
-    global mass_max_value
+    # No longer need global mass_max_value as we pass ranges directly
 
     # Unpack the passed data tuple
-    snapshot_data, tfinal_factor, total_snapshots, r_max, project_root_path = frame_data
+    snapshot_data, tfinal_factor, total_snapshots, r_range, m_range, project_root_path = frame_data
     # Unpack the actual data from the snapshot tuple
     snap, radius, mass = snapshot_data
+    # Unpack the range tuples
+    r_min, r_max = r_range
+    m_min, m_max = m_range
 
     # Calculate time in dynamical times using the passed total_snapshots
     if total_snapshots and total_snapshots > 1:
@@ -3521,13 +4374,14 @@ def render_mass_frame(frame_data):
     ax.set_xlabel(r"$r$ (kpc)", fontsize=12)
     ax.set_ylabel(r"$M(r)$ (M$_\odot$)", fontsize=12)
     
-    # Use the pre-calculated r_max value that was passed in
-    ax.set_xlim(0, r_max)
     
-    # Use calculated maximum mass value
-    ax.set_ylim(0, mass_max_value if mass_max_value > 0 else 6.2e11)
+    # Use the passed range values
+    ax.set_xlim(r_min, r_max)
     
-    ax.grid(True, which='both', linestyle='--')
+    # Use the passed mass range
+    ax.set_ylim(m_min, m_max)
+    
+    ax.grid(True, which='both', linestyle='--', alpha=0.3)
     ax.plot(radius, mass, lw=2)
 
     # Add text in upper right corner showing time in dynamical times
@@ -3552,19 +4406,20 @@ def render_density_frame(frame_data):
     Parameters
     ----------
     frame_data : tuple
-        Tuple containing (snapshot_data, tfinal_factor, total_frames, r_max, project_root_path) where
-        snapshot_data is the (snap, radius, density) tuple from density_snapshots.
+        Tuple containing (snapshot_data, tfinal_factor, total_frames, r_range, d_range, project_root_path) where
+        snapshot_data is the (snap, radius, density) tuple from density_snapshots,
+        r_range is (r_min, r_max) tuple for radius axis limits,
+        d_range is (d_min, d_max) tuple for density axis limits.
 
     Returns
     -------
     numpy.ndarray
         Image data for the rendered frame.
     """
-    # Access only density_max_value from globals, not density_snapshots
-    global density_max_value
+    # No longer need global density_max_value as it's passed in d_range
 
     # Unpack the passed data tuple
-    snapshot_data, tfinal_factor, total_snapshots, r_max, project_root_path = frame_data
+    snapshot_data, tfinal_factor, total_snapshots, r_range, d_range, project_root_path = frame_data
     # Unpack the actual data from the snapshot tuple
     snap, radius, density = snapshot_data # Assumed this is 4*pi*r^2*rho
 
@@ -3580,13 +4435,14 @@ def render_density_frame(frame_data):
     ax.set_xlabel(r"$r$ (kpc)", fontsize=12)
     ax.set_ylabel(r"$4\pi r^2 \rho(r)$ (M$_\odot$/kpc)", fontsize=12) # Label matches data
     
-    # Use the pre-calculated r_max value that was passed in
-    ax.set_xlim(0, r_max)
     
-    # Use calculated maximum density value
-    ax.set_ylim(0, density_max_value if density_max_value > 0 else 1.2e10)
+    # Use the passed range values
+    ax.set_xlim(r_range[0], r_range[1])
     
-    ax.grid(True, which='both', linestyle='--')
+    # Use the passed density range
+    ax.set_ylim(d_range[0], d_range[1])
+    
+    ax.grid(True, which='both', linestyle='--', alpha=0.3)
     # Directly plot the 'density' variable, as it's assumed to be 4*pi*r^2*rho already
     ax.plot(radius, density, lw=2)
 
@@ -3611,19 +4467,20 @@ def render_psi_frame(frame_data):
     Parameters
     ----------
     frame_data : tuple
-        Tuple containing (snapshot_data, tfinal_factor, total_frames, r_max, project_root_path) where
-        snapshot_data is the (snap, radius, psi) tuple from psi_snapshots.
+        Tuple containing (snapshot_data, tfinal_factor, total_frames, r_range, p_range, project_root_path) where
+        snapshot_data is the (snap, radius, psi) tuple from psi_snapshots,
+        r_range is (r_min, r_max) tuple for radius axis limits,
+        p_range is (p_min, p_max) tuple for psi axis limits.
 
     Returns
     -------
     numpy.ndarray
         Image data for the rendered frame.
     """
-    # Access only psi_max_value from globals, not psi_snapshots
-    global psi_max_value
+    # No longer need global psi_max_value as it's passed in p_range
 
     # Unpack the passed data tuple
-    snapshot_data, tfinal_factor, total_snapshots, r_max, project_root_path = frame_data
+    snapshot_data, tfinal_factor, total_snapshots, r_range, p_range, project_root_path = frame_data
     # Unpack the actual data from the snapshot tuple
     snap, radius, psi = snapshot_data
 
@@ -3639,13 +4496,14 @@ def render_psi_frame(frame_data):
     ax.set_xlabel(r"$r$ (kpc)", fontsize=12)
     ax.set_ylabel(r"$\Psi(r)$ (km$^2$/s$^2$)", fontsize=12)
     
-    # Use the pre-calculated r_max value that was passed in
-    ax.set_xlim(0, r_max)
     
-    # Use calculated maximum psi value
-    ax.set_ylim(0, psi_max_value if psi_max_value > 0 else 0.072)
+    # Use the passed range values
+    ax.set_xlim(r_range[0], r_range[1])
     
-    ax.grid(True, which='both', linestyle='--')
+    # Use the passed psi range
+    ax.set_ylim(p_range[0], p_range[1])
+    
+    ax.grid(True, which='both', linestyle='--', alpha=0.3)
     ax.plot(radius, psi, lw=2)
 
     # Add text in upper right corner showing time in dynamical times
@@ -3681,7 +4539,7 @@ def process_particle_data(data, n_cols):
     # These use global constants defined at the top of the file
     
     if data is None or data.shape[0] == 0: 
-        return None, None, None, None
+        return None, None, None, None, None
 
     if n_cols == ncol_particles_initial:
         radii, radial_velocity, angular_momentum = data[:, 0], data[:, 1], data[:, 2]
@@ -3689,12 +4547,12 @@ def process_particle_data(data, n_cols):
         radii, radial_velocity, angular_momentum = data[:, 2], data[:, 3], data[:, 6]
     else:
         log_message(f"Error: Unsupported column count ({n_cols})", level="error")
-        return None, None, None, None
+        return None, None, None, None, None
 
     nonzero_mask = radii > 0
     if not np.any(nonzero_mask):
         log_message("Warning: No particles with positive radius found.", level="warning")
-        return None, None, None, None
+        return None, None, None, None, None
 
     radii_nz = radii[nonzero_mask]
     radial_velocity_nz = radial_velocity[nonzero_mask]
@@ -3702,7 +4560,7 @@ def process_particle_data(data, n_cols):
 
     if np.any(radii_nz <= 0):
         log_message("Warning: Zero or negative radius found after mask?", level="warning")
-        return None, None, None, None
+        return None, None, None, None, None
 
     with np.errstate(divide='ignore', invalid='ignore'):
         tangential_velocity_sim = angular_momentum_nz / radii_nz
@@ -3710,24 +4568,27 @@ def process_particle_data(data, n_cols):
     
     kmsec_to_kpcmyr = 1.02271e-3
     total_velocity_kms = total_velocity_sim / kmsec_to_kpcmyr
+    tangential_velocity_kms = tangential_velocity_sim / kmsec_to_kpcmyr # Convert v_perp to km/s
 
     valid_mask = np.isfinite(radii_nz) & np.isfinite(total_velocity_kms) & \
                  np.isfinite(radial_velocity_nz) & np.isfinite(angular_momentum_nz) & \
-                 (total_velocity_kms > 0) & (radii_nz > 0)
+                 np.isfinite(tangential_velocity_kms) & \
+                 (total_velocity_kms >= 0) & (radii_nz > 0) # v_total can be 0 if at rest
 
     if not np.any(valid_mask):
         log_message("Warning: No valid particles after filtering infinities/NaNs.", level="warning")
-        return None, None, None, None
+        return None, None, None, None, None
 
     final_radii = radii_nz[valid_mask]
     final_vr_kms = (radial_velocity_nz[valid_mask]) / kmsec_to_kpcmyr
     final_L = angular_momentum_nz[valid_mask]
     final_vtotal_kms = total_velocity_kms[valid_mask]
+    final_vperp_kms = tangential_velocity_kms[valid_mask]
 
     log_message(f"Processed data: {len(final_radii)} valid particles.", level="debug")
-    return final_radii, final_vr_kms, final_L, final_vtotal_kms
+    return final_radii, final_vr_kms, final_L, final_vtotal_kms, final_vperp_kms
 
-def plot_particles_histograms(suffix, progress_callback=None):
+def plot_particles_histograms(suffix, progress_callback=None, config=None):
     """
     Plots 2D histograms from the particles files.
 
@@ -3746,6 +4607,8 @@ def plot_particles_histograms(suffix, progress_callback=None):
     progress_callback : callable, optional
         Function to call after each plot is saved,
         with the output file path as argument.
+    config : dict, optional
+        Configuration dictionary with plot settings
     """
     # Constants for expected number of columns
     ncol_particles_initial = 4
@@ -3813,21 +4676,50 @@ def plot_particles_histograms(suffix, progress_callback=None):
                 logger.warning("All initial radii/velocities invalid or empty.")
                 print_status("All initial radii/velocities invalid or empty.")
             else:
+                # Calculate dynamic ranges using the robust range helper
+                r_min, r_max = _calculate_robust_range(
+                    iradii, percentile=config.x_percentile, 
+                    percentile_multiplier=config.x_percentile_multiplier,
+                    min_abs_extent=config.min_x_range_abs,
+                    default_if_empty=(0, 250.0), can_be_negative=False,
+                    axis_name="radius"
+                )
+                
+                v_min, v_max = _calculate_robust_range(
+                    ivelocities, percentile=config.y_percentile,
+                    percentile_multiplier=config.y_percentile_multiplier,
+                    min_abs_extent=config.min_y_range_abs, 
+                    default_if_empty=(0, 320.0), can_be_negative=False,
+                    axis_name="velocity"
+                )
+                
                 plt.figure(figsize=(8, 6))
+                hist_counts, _, _ = np.histogram2d(iradii, ivelocities, bins=250, 
+                                                   range=[[r_min, r_max], [v_min, v_max]])
+                
+                # Calculate color scale limits based on statistics of non-zero bins
+                nonzero_counts = hist_counts[hist_counts > 0]
+                if len(nonzero_counts) > 0:
+                    # Use 2.5x the 75th percentile for color scale maximum
+                    vmax = np.percentile(nonzero_counts, 75) * 2.5
+                    vmin = 0
+                else:
+                    vmin, vmax = 0, 1
+                
                 plt.hist2d(iradii, ivelocities, bins=250, range=[
-                           [0, 250], [0, 320]], cmap='viridis')
+                           [r_min, r_max], [v_min, v_max]], cmap='viridis', vmin=vmin, vmax=vmax)
                 plt.colorbar(label='Counts')
                 plt.xlabel(r'$r$ (kpc)', fontsize=12)
                 plt.ylabel(r'$v$ (km/s)', fontsize=12)
                 plt.title(r'Initial Phase Space Distribution', fontsize=14)
-                plt.xlim(0, 250)
-                plt.ylim(0, 320)
+                plt.xlim(r_min, r_max)
+                plt.ylim(v_min, v_max)
                 output_file = f"results/2d_histogram_initial{suffix}.png"
 
                 # Save original data size before any filtering
                 original_size = data.shape[0]
                 # Calculate and store histogram statistics
-                hist_counts, _, _ = np.histogram2d(iradii, ivelocities, bins=250, range=[[0, 250], [0, 320]])
+                hist_counts, _, _ = np.histogram2d(iradii, ivelocities, bins=250, range=[[r_min, r_max], [v_min, v_max]])
                 initial_max = np.max(hist_counts)
                 initial_nonzero = np.count_nonzero(hist_counts)
                 initial_mean = np.sum(hist_counts)/initial_nonzero if initial_nonzero > 0 else 0
@@ -3905,21 +4797,50 @@ def plot_particles_histograms(suffix, progress_callback=None):
                 logger.warning("All final radii/velocities invalid or empty.")
                 print_status("All final radii/velocities invalid or empty.")
             else:
+                # Calculate dynamic ranges using the robust range helper
+                r_min, r_max = _calculate_robust_range(
+                    fradii, percentile=config.x_percentile,
+                    percentile_multiplier=config.x_percentile_multiplier,
+                    min_abs_extent=config.min_x_range_abs,
+                    default_if_empty=(0, 250.0), can_be_negative=False,
+                    axis_name="radius"
+                )
+                
+                v_min, v_max = _calculate_robust_range(
+                    fvelocities, percentile=config.y_percentile,
+                    percentile_multiplier=config.y_percentile_multiplier,
+                    min_abs_extent=config.min_y_range_abs, 
+                    default_if_empty=(0, 320.0), can_be_negative=False,
+                    axis_name="velocity"
+                )
+                
                 plt.figure(figsize=(8, 6))
+                hist_counts_temp, _, _ = np.histogram2d(fradii, fvelocities, bins=250, 
+                                                        range=[[r_min, r_max], [v_min, v_max]])
+                
+                # Calculate color scale limits based on statistics of non-zero bins
+                nonzero_counts_temp = hist_counts_temp[hist_counts_temp > 0]
+                if len(nonzero_counts_temp) > 0:
+                    # Use 2.5x the 75th percentile for color scale maximum
+                    vmax_color = np.percentile(nonzero_counts_temp, 75) * 2.5
+                    vmin_color = 0
+                else:
+                    vmin_color, vmax_color = 0, 1
+                
                 plt.hist2d(fradii, fvelocities, bins=250, range=[
-                           [0, 250], [0, 320]], cmap='viridis')
+                           [r_min, r_max], [v_min, v_max]], cmap='viridis', vmin=vmin_color, vmax=vmax_color)
                 plt.colorbar(label='Counts')
                 plt.xlabel(r'$r$ (kpc)', fontsize=12)
                 plt.ylabel(r'$v$ (km/s)', fontsize=12)
                 plt.title(r'Final Phase Space Distribution', fontsize=14)
-                plt.xlim(0, 250)
-                plt.ylim(0, 320)
+                plt.xlim(r_min, r_max)
+                plt.ylim(v_min, v_max)
                 output_file = f"results/2d_histogram_final{suffix}.png"
 
                 # Save original data size before any filtering
                 original_size = data.shape[0]
                 # Calculate and store histogram statistics
-                hist_counts, _, _ = np.histogram2d(fradii, fvelocities, bins=250, range=[[0, 250], [0, 320]])
+                hist_counts, _, _ = np.histogram2d(fradii, fvelocities, bins=250, range=[[r_min, r_max], [v_min, v_max]])
                 final_max = np.max(hist_counts)
                 final_nonzero = np.count_nonzero(hist_counts)
                 final_mean = np.sum(hist_counts)/final_nonzero if final_nonzero > 0 else 0
@@ -3988,16 +4909,26 @@ def plot_particles_histograms(suffix, progress_callback=None):
         for output_file in output_files:
             update_combined_progress("particles_histograms_plots", output_file)
 
-def plot_nsphere_histograms(suffix, progress_callback=None):
+def plot_nsphere_histograms(suffix, progress_callback=None, config=None):
     """
     Plots 2D histograms from the nsphere.c-produced binary histogram files.
 
-    Expects each file to contain 3 columns and 40000 records (reshaped to 200 × 200).
+    Expects each file to contain 3 columns and 160000 records (reshaped to 400 × 400).
 
     • data/2d_hist_initial{suffix}.dat for the initial histogram.
     • data/2d_hist_final{suffix}.dat for the final histogram.
 
     The plots are created using plt.pcolormesh and saved into the "results" folder.
+    
+    Parameters
+    ----------
+    suffix : str
+        Suffix for input/output files.
+    progress_callback : callable, optional
+        Function to call after each plot is saved,
+        with the output file path as argument.
+    config : dict, optional
+        Configuration dictionary with plot settings
     """
     ncols_hist = 3
     hist_dtype = [np.float32, np.float32, np.int32]
@@ -4027,17 +4958,17 @@ def plot_nsphere_histograms(suffix, progress_callback=None):
             logger.warning(f"No valid data in {hist_initial_file}")
             print_status(f"No valid data in {hist_initial_file}")
         else:
-            if data_init.shape[0] != 40000:
+            if data_init.shape[0] != 160000:
                 logger.warning(
-                    f"Expected 40000 entries in {hist_initial_file}, got {data_init.shape[0]}")
+                    f"Expected 160000 entries in {hist_initial_file}, got {data_init.shape[0]}")
                 print_status(
-                    f"Warning: Expected 40000 entries in {hist_initial_file}, got {data_init.shape[0]}")
+                    f"Warning: Expected 160000 entries in {hist_initial_file}, got {data_init.shape[0]}")
             else:
                 try:
                     logger.info(f"Processing initial histogram data, shape: {data_init.shape}")
-                    X_init = data_init[:, 0].reshape((200, 200))
-                    Y_init = data_init[:, 1].reshape((200, 200))
-                    C_init = data_init[:, 2].reshape((200, 200))
+                    X_init = data_init[:, 0].reshape((400, 400))
+                    Y_init = data_init[:, 1].reshape((400, 400))
+                    C_init = data_init[:, 2].reshape((400, 400))
 
                     # Calculate statistics for histogram
                     hist_max = np.max(C_init)
@@ -4052,13 +4983,71 @@ def plot_nsphere_histograms(suffix, progress_callback=None):
 
                     logger.info(f"Initial histogram statistics: Min={np.min(C_init)}, Max={hist_max}, Mean={hist_mean:.2f}, Non-Zero Bins={hist_nonzero}")
 
+                    # Calculate robust ranges from histogram data if config available
+                    if config and hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+                        # Get unique bin centers - the histogram is a meshgrid
+                        r_centers = np.unique(X_init)  # Get unique radius values
+                        v_centers = np.unique(Y_init)  # Get unique velocity values
+                        
+                        
+                        # Sum histogram counts along axes to get 1D distributions
+                        # From debug: X varies down rows (axis 0), Y varies across columns (axis 1)
+                        # So C[i,j] represents counts at (r_centers[i], v_centers[j])
+                        r_counts = np.sum(C_init, axis=1)  # Sum across columns (v) to get r distribution
+                        v_counts = np.sum(C_init, axis=0)  # Sum across rows (r) to get v distribution
+                        
+                        # Calculate robust ranges
+                        r_min, r_max = _calculate_robust_range_from_histogram(
+                            r_centers, r_counts, 
+                            percentile=config.x_percentile,
+                            percentile_multiplier=config.x_percentile_multiplier,
+                            min_abs_extent=config.min_x_range_abs,
+                            default_if_empty=(0, 250.0), can_be_negative=False,
+                            axis_name="radius (initial nsphere)"
+                        )
+                        
+                        v_min, v_max = _calculate_robust_range_from_histogram(
+                            v_centers, v_counts,
+                            percentile=config.y_percentile,
+                            percentile_multiplier=config.y_percentile_multiplier,
+                            min_abs_extent=config.min_y_range_abs,
+                            default_if_empty=(0, 320.0), can_be_negative=False,
+                            axis_name="velocity (initial nsphere)"
+                        )
+                        
+                        # For nsphere histograms, cap the range at the actual maximum populated bin
+                        # to avoid showing excessive empty space from the fixed 320 km/s C code range
+                        nonzero_v_indices = np.where(v_counts > 0)[0]
+                        if len(nonzero_v_indices) > 0:
+                            max_populated_v = v_centers[nonzero_v_indices[-1]]
+                            v_max = min(v_max, max_populated_v * 1.05)  # Allow 5% padding above max populated bin
+                    else:
+                        # Use full data range
+                        r_min, r_max = np.min(X_init), np.max(X_init)
+                        v_min, v_max = np.min(Y_init), np.max(Y_init)
+                    
+                    # Find indices within the calculated range limits
+                    r_vals = X_init[0, :]  # Radius values from first row
+                    v_vals = Y_init[:, 0]  # Velocity values from first column
+                    
+                    # Find indices that fall within our calculated ranges
+                    r_mask = (r_vals >= r_min) & (r_vals <= r_max)
+                    v_mask = (v_vals >= v_min) & (v_vals <= v_max)
+                    
+                    # Trim the data to only include bins within range
+                    X_trimmed = X_init[np.ix_(v_mask, r_mask)]
+                    Y_trimmed = Y_init[np.ix_(v_mask, r_mask)]
+                    C_trimmed = C_init[np.ix_(v_mask, r_mask)]
+                    
                     plt.figure(figsize=(8, 6))
-                    plt.pcolormesh(X_init, Y_init, C_init,
-                                   shading='auto', cmap='viridis')
-                    plt.colorbar(label='Counts')
+                    pcm = plt.pcolormesh(X_trimmed, Y_trimmed, C_trimmed,
+                                         shading='auto', cmap='viridis')
+                    cbar = plt.colorbar(pcm, label='Counts')
                     plt.xlabel(r'$r$ (kpc)', fontsize=12)
                     plt.ylabel(r'$v$ (km/s)', fontsize=12)
                     plt.title(r'Initial Phase Space Distribution (nsphere.c)', fontsize=14)
+                    plt.xlim(r_min, r_max)
+                    plt.ylim(v_min, v_max)
                     output_file = f"results/2d_hist_nsphere_initial{suffix}.png"
                     plt.savefig(output_file, dpi=150)
                     plt.close()
@@ -4089,17 +5078,17 @@ def plot_nsphere_histograms(suffix, progress_callback=None):
             logger.warning(f"No valid data in {hist_final_file}")
             print_status(f"No valid data in {hist_final_file}")
         else:
-            if data_final.shape[0] != 40000:
+            if data_final.shape[0] != 160000:
                 logger.warning(
-                    f"Expected 40000 entries in {hist_final_file}, got {data_final.shape[0]}")
+                    f"Expected 160000 entries in {hist_final_file}, got {data_final.shape[0]}")
                 print_status(
-                    f"Warning: Expected 40000 entries in {hist_final_file}, got {data_final.shape[0]}")
+                    f"Warning: Expected 160000 entries in {hist_final_file}, got {data_final.shape[0]}")
             else:
                 try:
                     logger.info(f"Processing final histogram data, shape: {data_final.shape}")
-                    X_final = data_final[:, 0].reshape((200, 200))
-                    Y_final = data_final[:, 1].reshape((200, 200))
-                    C_final = data_final[:, 2].reshape((200, 200))
+                    X_final = data_final[:, 0].reshape((400, 400))
+                    Y_final = data_final[:, 1].reshape((400, 400))
+                    C_final = data_final[:, 2].reshape((400, 400))
 
                     # Calculate statistics for histogram
                     # Use different variable names for final histogram to avoid overwriting initial values
@@ -4115,13 +5104,143 @@ def plot_nsphere_histograms(suffix, progress_callback=None):
 
                     logger.info(f"Final histogram statistics: Min={np.min(C_final)}, Max={final_max}, Mean={final_mean:.2f}, Non-Zero Bins={final_nonzero}")
 
+                    # Calculate robust ranges from histogram data if config available
+                    if config and hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+                        # Get unique bin centers - the histogram is a meshgrid
+                        r_centers = np.unique(X_final)  # Get unique radius values
+                        v_centers = np.unique(Y_final)  # Get unique velocity values
+                        
+                        
+                        # Sum histogram counts along axes to get 1D distributions
+                        # From debug: X varies down rows (axis 0), Y varies across columns (axis 1)
+                        # So C[i,j] represents counts at (r_centers[i], v_centers[j])
+                        r_counts = np.sum(C_final, axis=1)  # Sum across columns (v) to get r distribution
+                        v_counts = np.sum(C_final, axis=0)  # Sum across rows (r) to get v distribution
+                        
+                        # Debug: Check if high-v particles are in C_final
+                        total_in_2d = np.sum(C_final)
+                        high_v_indices = np.where(v_centers > 210)[0]
+                        particles_above_210_in_2d = np.sum(C_final[high_v_indices, :])
+                        logger.info(f"NSphere final: Total particles in 2D histogram = {total_in_2d}")
+                        logger.info(f"NSphere final: Particles with v>210 in 2D histogram = {particles_above_210_in_2d}")
+                        
+                        # Find the actual maximum populated velocity bin
+                        nonzero_v_indices = np.where(v_counts > 0)[0]
+                        if len(nonzero_v_indices) > 0:
+                            max_populated_v_bin = nonzero_v_indices[-1]
+                            max_populated_v = v_centers[max_populated_v_bin]
+                            total_counts = np.sum(v_counts)
+                            high_v_counts_200 = np.sum(v_counts[v_centers > 200])  # Count particles above 200 km/s
+                            high_v_counts_210 = np.sum(v_counts[v_centers > 210])  # Count particles above 210 km/s
+                            high_v_counts_250 = np.sum(v_counts[v_centers > 250])  # Count particles above 250 km/s
+                            logger.info(f"NSphere final: Maximum populated velocity bin at {max_populated_v:.1f} km/s")
+                            logger.info(f"NSphere final: Total particles = {total_counts}")
+                            logger.info(f"NSphere final: particles > 200 km/s = {high_v_counts_200} ({100*high_v_counts_200/total_counts:.1f}%)")
+                            logger.info(f"NSphere final: particles > 210 km/s = {high_v_counts_210} ({100*high_v_counts_210/total_counts:.1f}%)")
+                            logger.info(f"NSphere final: particles > 250 km/s = {high_v_counts_250} ({100*high_v_counts_250/total_counts:.1f}%)")
+                            
+                            # Check WHERE the high-velocity particles are in radius
+                            high_v_mask = v_centers > 210
+                            # Check within displayed range (r < 120 kpc)
+                            displayed_r_mask = r_centers < 120
+                            high_v_displayed_count = 0
+                            high_v_outside_count = 0
+                            
+                            for r_idx in range(len(r_centers)):
+                                for v_idx in np.where(high_v_mask)[0]:
+                                    if C_final[v_idx, r_idx] > 0:
+                                        if displayed_r_mask[r_idx]:
+                                            high_v_displayed_count += C_final[v_idx, r_idx]
+                                        else:
+                                            high_v_outside_count += C_final[v_idx, r_idx]
+                            
+                            logger.info(f"NSphere final: High-v particles (>210 km/s) within r<120 kpc = {high_v_displayed_count}")
+                            logger.info(f"NSphere final: High-v particles (>210 km/s) at r>120 kpc = {high_v_outside_count}")
+                            
+                            # Find which radius bins contain the high-v particles
+                            high_v_by_radius = []
+                            for r_idx in range(len(r_centers)):
+                                count_at_r = 0
+                                for v_idx in np.where(high_v_mask)[0]:
+                                    count_at_r += C_final[v_idx, r_idx]
+                                if count_at_r > 0:
+                                    high_v_by_radius.append((r_centers[r_idx], count_at_r))
+                            
+                            # Sort by count and show top 5
+                            high_v_by_radius.sort(key=lambda x: x[1], reverse=True)
+                            logger.info("NSphere final: Top 5 radius bins with high-v particles (>210 km/s):")
+                            for i, (r, count) in enumerate(high_v_by_radius[:5]):
+                                logger.info(f"  r={r:.1f} kpc: {count:.0f} particles")
+                            
+                            # Check velocity distribution at r~55 kpc
+                            r_55_idx = np.argmin(np.abs(r_centers - 55.0))
+                            v_dist_at_55 = C_final[:, r_55_idx]
+                            nonzero_v_at_55 = v_centers[v_dist_at_55 > 0]
+                            counts_at_55 = v_dist_at_55[v_dist_at_55 > 0]
+                            
+                            if len(nonzero_v_at_55) > 0:
+                                # Reconstruct distribution for percentile calculation
+                                v_values_at_55 = np.repeat(nonzero_v_at_55, counts_at_55.astype(int))
+                                v_95_at_55 = np.percentile(v_values_at_55, 95)
+                                v_max_at_55 = np.max(nonzero_v_at_55)
+                                logger.info(f"NSphere final: At r={r_centers[r_55_idx]:.1f} kpc:")
+                                logger.info(f"  Total particles: {np.sum(counts_at_55):.0f}")
+                                logger.info(f"  95th percentile velocity: {v_95_at_55:.1f} km/s")
+                                logger.info(f"  Maximum velocity: {v_max_at_55:.1f} km/s")
+                        
+                        # Calculate robust ranges
+                        r_min, r_max = _calculate_robust_range_from_histogram(
+                            r_centers, r_counts, 
+                            percentile=config.x_percentile,
+                            percentile_multiplier=config.x_percentile_multiplier,
+                            min_abs_extent=config.min_x_range_abs,
+                            default_if_empty=(0, 250.0), can_be_negative=False,
+                            axis_name="radius (final nsphere)"
+                        )
+                        
+                        v_min, v_max = _calculate_robust_range_from_histogram(
+                            v_centers, v_counts,
+                            percentile=config.y_percentile,
+                            percentile_multiplier=config.y_percentile_multiplier,
+                            min_abs_extent=config.min_y_range_abs,
+                            default_if_empty=(0, 320.0), can_be_negative=False,
+                            axis_name="velocity (final nsphere)"
+                        )
+                        
+                        # For nsphere histograms, cap the range at the actual maximum populated bin
+                        # to avoid showing excessive empty space from the fixed 320 km/s C code range
+                        if len(nonzero_v_indices) > 0:
+                            max_populated_v = v_centers[nonzero_v_indices[-1]]
+                            v_max = min(v_max, max_populated_v * 1.05)  # Allow 5% padding above max populated bin
+                        
+                        logger.info(f"NSphere final histogram velocity range: [{v_min:.1f}, {v_max:.1f}] km/s")
+                    else:
+                        # Use full data range
+                        r_min, r_max = np.min(X_final), np.max(X_final)
+                        v_min, v_max = np.min(Y_final), np.max(Y_final)
+                    
+                    # Find indices within the calculated range limits
+                    r_vals = X_final[0, :]  # Radius values from first row
+                    v_vals = Y_final[:, 0]  # Velocity values from first column
+                    
+                    # Find indices that fall within our calculated ranges
+                    r_mask = (r_vals >= r_min) & (r_vals <= r_max)
+                    v_mask = (v_vals >= v_min) & (v_vals <= v_max)
+                    
+                    # Trim the data to only include bins within range
+                    X_trimmed = X_final[np.ix_(v_mask, r_mask)]
+                    Y_trimmed = Y_final[np.ix_(v_mask, r_mask)]
+                    C_trimmed = C_final[np.ix_(v_mask, r_mask)]
+                    
                     plt.figure(figsize=(8, 6))
-                    plt.pcolormesh(X_final, Y_final, C_final,
-                                   shading='auto', cmap='viridis')
-                    plt.colorbar(label='Counts')
+                    pcm = plt.pcolormesh(X_trimmed, Y_trimmed, C_trimmed,
+                                         shading='auto', cmap='viridis')
+                    cbar = plt.colorbar(pcm, label='Counts')
                     plt.xlabel(r'$r$ (kpc)', fontsize=12)
                     plt.ylabel(r'$v$ (km/s)', fontsize=12)
                     plt.title(r'Final Phase Space Distribution (nsphere.c)', fontsize=14)
+                    plt.xlim(r_min, r_max)
+                    plt.ylim(v_min, v_max)
                     output_file = f"results/2d_hist_nsphere_final{suffix}.png"
                     plt.savefig(output_file, dpi=150)
                     plt.close()
@@ -4192,13 +5311,11 @@ def process_sorted_energy_file(task_data):
     fname, local_suffix = task_data
     global ncol_Rank_Mass_Rad_VRad_unsorted
 
-    # Extract the timestep from the filename
-    m = re.search(r'Rank_Mass_Rad_VRad_unsorted_t(\d+)' + re.escape(local_suffix) + r'\.dat$', fname)
-    if not m:
+    # Use the suffix-aware helper
+    snap = _extract_Rank_snapnum(fname, local_suffix)
+    if snap == 999999999:
         logger.warning(f"Regex failed for sorted energy file {fname} with suffix '{local_suffix}'")
         return None
-
-    snap = int(m.group(1))
 
     # Reload tracked IDs inside the worker
     lowest_radius_ids_file = f"data/lowest_radius_ids{local_suffix}.dat"
@@ -4238,11 +5355,10 @@ def phase_space_process_rank_file(fname):
         (snapshot_number, data) if successful, otherwise None.
         'data' is a structured numpy array containing the file contents.
     """
-    # Extract the timestep from the filename.
-    mo = re.search(r'Rank_Mass_Rad_VRad_sorted_t(\d+)' + re.escape(suffix) + r'\.dat$', fname)
-    if not mo:
+    # Use the suffix-aware helper
+    snap = _extract_Rank_snapnum(fname, suffix)
+    if snap == 999999999:
         return None
-    snap = int(mo.group(1))
 
     # Constants for the expected number of columns
     ncol_Rank_Mass_Rad_VRad_sorted = 8
@@ -4276,13 +5392,11 @@ def process_unsorted_rank_file(task_data_with_suffix):
     # Unpack arguments
     fname, project_root_path, local_suffix = task_data_with_suffix
     
-    # Extract the timestep from the filename
-    mo = re.search(r'Rank_Mass_Rad_VRad_unsorted_t(\d+)' + re.escape(local_suffix) + r'\.dat$', fname)
-    if not mo:
+    # Use the suffix-aware helper
+    snap = _extract_Rank_snapnum(fname, local_suffix)
+    if snap == 999999999:
         logger.warning(f"Regex failed for unsorted file {fname} with suffix '{local_suffix}'")
         return None
-
-    snap = int(mo.group(1))
 
     # Constants for the expected number of columns
     ncol = ncol_Rank_Mass_Rad_VRad_unsorted # Should be 7
@@ -4332,12 +5446,10 @@ def process_sorted_energy(fname):
     tuple or None
         (snapshot_number, energy_values) if successful or None if there was an error.
     """
-    # Extract the timestep from the filename
-    mo = re.search(r'Rank_Mass_Rad_VRad_sorted_t(\d+)' + re.escape(suffix) + r'\.dat$', fname)
-    if not mo:
+    # Use the suffix-aware helper
+    snap = _extract_Rank_snapnum(fname, suffix)
+    if snap == 999999999:
         return None
-
-    snap = int(mo.group(1))
 
     # Load the particle IDs to track (particles with lowest initial radius)
     lowest_radius_ids_file = f"data/lowest_radius_ids{suffix}.dat"
@@ -4384,11 +5496,10 @@ def process_rank_file(fname):
     tuple or None
         (snapshot_number, decimated_data) if successful or None if there was an error.
     """
-    # Extract the timestep from the filename
-    mo = re.search(r'Rank_Mass_Rad_VRad_sorted_t(\d+)' + re.escape(suffix) + r'\.dat$', fname)
-    if not mo:
+    # Use the suffix-aware helper
+    snap = _extract_Rank_snapnum(fname, suffix)
+    if snap == 999999999:
         return None
-    snap = int(mo.group(1))
 
     # Read the file using the safe loader
     data = safe_load_and_filter_bin(fname, ncol_Rank_Mass_Rad_VRad_sorted,
@@ -4632,14 +5743,14 @@ def preprocess_phase_space_file(rank_file_data_with_suffix):
 
     return (snap_num, H, frame_vmax)
 
-def generate_phase_space_animation(suffix, fps=10):
+def generate_phase_space_animation(config, fps=10):
     """
     Creates an animation showing the evolution of the phase space distribution over time.
     
     Parameters
     ----------
-    suffix : str
-        Suffix for input/output files.
+    config : object
+        Configuration object containing suffix and plot settings.
     fps : int, optional
         Frames per second for the animation, by default 10.
         
@@ -4656,7 +5767,7 @@ def generate_phase_space_animation(suffix, fps=10):
     Requires imageio v2 (`pip install imageio==2.*`).
     """
     # Find all Rank sorted files with the exact suffix
-    rank_files = glob.glob(f"data/Rank_Mass_Rad_VRad_sorted_t*{suffix}.dat")
+    rank_files = glob.glob(f"data/Rank_Mass_Rad_VRad_sorted_t*{config.suffix}.dat")
 
     # Filter to keep ONLY files that match the exact pattern:
     # data/Rank_Mass_Rad_VRad_sorted_t00001_40000_1001_5.dat
@@ -4667,14 +5778,14 @@ def generate_phase_space_animation(suffix, fps=10):
     # Debug output
     global enable_logging
     if enable_logging:
-        log_message(f"Found {len(rank_files)} rank files with pattern: data/Rank_Mass_Rad_VRad_sorted_t*{suffix}.dat (after filtering)")
+        log_message(f"Found {len(rank_files)} rank files with pattern: data/Rank_Mass_Rad_VRad_sorted_t*{config.suffix}.dat (after filtering)")
 
     if not rank_files:
         print_status("No Rank sorted files found. Cannot create phase space animation.")
         return False
 
     # Sort files by snapshot number to ensure correct animation sequence
-    rank_files.sort(key=lambda fname: _extract_Rank_snapnum(fname, suffix))
+    rank_files.sort(key=lambda fname: _extract_Rank_snapnum(fname, config.suffix))
 
     # Log the exact file count (to log file only)
     file_count = len(rank_files)
@@ -4685,13 +5796,45 @@ def generate_phase_space_animation(suffix, fps=10):
         log_message(f"Example files (first 3): {', '.join(rank_files[:3])}")
 
     # Constants
-    ncol_Rank_Mass_Rad_VRad_sorted = 8
-    kmsec_to_kpcmyr = 1.02271e-3  # Conversion factor
+    ncol_Rank_Mass_Rad_VRad_sorted = 8 # This remains a file structure constant
+    kmsec_to_kpcmyr_local = kmsec_to_kpcmyr # Use the global kmsec_to_kpcmyr
 
-    # Set up histogram parameters
-    max_r_all = 250.0
-    max_v_all = 320.0
-    nbins = 200
+    # Default histogram parameters (used if not median-based or if median calc fails)
+    default_max_r_anim = 250.0
+    default_max_v_anim = 320.0
+    nbins = 200 # Keep nbins fixed for now
+
+    # Initialize ranges to defaults
+    current_plot_range_r_anim = (0, default_max_r_anim)
+    current_plot_range_v_anim = (0, default_max_v_anim)
+
+    if hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+        # Determine a subset of files for range calculation if too many
+        # For example, take a sample or first/last N files.
+        # Here, using all filtered rank_files, but could be refined.
+        files_for_range_calc = rank_files 
+        if len(files_for_range_calc) > 50: # Heuristic: if more than 50 files, sample ~20-30%
+             sample_size = max(20, int(len(files_for_range_calc) * 0.3))
+             files_for_range_calc = sorted(np.random.choice(files_for_range_calc, size=sample_size, replace=False))
+
+
+        r_range_tuple, v_range_tuple = _calculate_global_animation_ranges(
+            rank_files_subset=files_for_range_calc,
+            r_min_abs_extent=config.min_x_range_abs,
+            v_min_abs_extent=config.min_y_range_abs,
+            r_default_if_empty=(0, default_max_r_anim),
+            v_default_if_empty=(0, default_max_v_anim),
+            kmsec_to_kpcmyr=kmsec_to_kpcmyr_local,
+            current_suffix_for_logging=config.suffix,
+            axis_name_prefix="phase_anim_global",
+            config=config
+        )
+        current_plot_range_r_anim = r_range_tuple
+        current_plot_range_v_anim = v_range_tuple
+        logger.info(f"Phase Anim Global Ranges: R={current_plot_range_r_anim}, V={current_plot_range_v_anim}")
+    else:
+        logger.info(f"Phase Anim Global Ranges: Using fixed R={(0, default_max_r_anim)}, V={(0, default_max_v_anim)}")
+        # Defaults current_plot_range_r_anim and current_plot_range_v_anim are already set
 
     # Prepare data for parallel preprocessing
     # Log to file only, keep console output minimal
@@ -4700,14 +5843,14 @@ def generate_phase_space_animation(suffix, fps=10):
     # Prepare data for parallel preprocessing, ensuring suffix is explicitly passed
     preprocess_args_with_suffix = [(
         rank_file,
-        None,  # Placeholder for original suffix position
+        None,  # Placeholder
         ncol_Rank_Mass_Rad_VRad_sorted,
-        max_r_all,
-        max_v_all,
+        current_plot_range_r_anim[1], # Pass determined max R for hist range
+        current_plot_range_v_anim[1], # Pass determined max V for hist range
         nbins,
-        kmsec_to_kpcmyr,
+        kmsec_to_kpcmyr_local, # Use local var
         PROJECT_ROOT,
-        suffix  # Add the suffix at the end of the tuple
+        config.suffix # Use config.suffix
     ) for rank_file in rank_files]
 
     # Process all files in parallel
@@ -4772,20 +5915,22 @@ def generate_phase_space_animation(suffix, fps=10):
     initial_vmax = max(vmax for _, _, vmax in frame_data_list)
 
     # Extract tfinal_factor from suffix if possible
-    # Format is typically _[file_tag]_npts_Ntimes_tfinal_factor
     tfinal_factor = 5  # Default value
-    parts = suffix.strip('_').split('_')
+    parts = config.suffix.strip('_').split('_') # Use config.suffix
     if len(parts) >= 3:
         try:
             tfinal_factor = int(parts[-1])
         except (ValueError, IndexError):
-            # Use default if parsing fails
             pass
 
-    # Update vmax for all frames to use the consistent value and add tfinal_factor
-    # Update vmax for all frames and add total_frames to each tuple for worker access
     total_frames = len(frame_data_list)
-    frame_data_list = [(snap_num, H, initial_vmax, tfinal_factor, total_frames) for snap_num, H, _ in frame_data_list]
+    # Augment frame_data_list to include the determined plot ranges for rendering
+    frame_data_list = [(
+        snap_num, H, initial_vmax, # initial_vmax is for color scale
+        tfinal_factor, total_frames,
+        current_plot_range_r_anim,    # Pass tuple (min_r, max_r)
+        current_plot_range_v_anim     # Pass tuple (min_v, max_v)
+    ) for snap_num, H, _ in frame_data_list] # Assuming frame_data_list was populated from preprocess_phase_space_file results
 
     # Render frames in parallel
     # Still set the global for backward compatibility, though workers won't use it
@@ -4795,7 +5940,7 @@ def generate_phase_space_animation(suffix, fps=10):
     log_message(f"Generating phase space frames for {total_frames} snapshots...")
 
     # Set up imageio writer
-    phase_anim_output = f"results/Phase_Space_Animation{suffix}.gif"
+    phase_anim_output = f"results/Phase_Space_Animation{config.suffix}.gif"
     # Use seconds per frame for imageio v2 duration
     frame_duration_sec_v2 = 1.0 / fps  # fps is frames per second, duration is seconds per frame
     try:
@@ -4892,7 +6037,7 @@ def generate_phase_space_animation(suffix, fps=10):
         gc.collect()
         return False
 
-def generate_all_1D_animations(suffix, duration):
+def generate_all_1D_animations(suffix, duration, config=None):
     """
     Generate all three 1D profile animations (mass, density, psi) with optimized parallel processing.
 
@@ -4902,6 +6047,9 @@ def generate_all_1D_animations(suffix, duration):
         Suffix for input/output files.
     duration : float
         Duration of each frame in milliseconds.
+    config : object, optional
+        Configuration object containing plot settings. If provided and has
+        use_median_ranges=True, will use robust ranging for axes.
 
     Notes
     -----
@@ -4924,7 +6072,7 @@ def generate_all_1D_animations(suffix, duration):
     for name, create_func in animations:
         try:
             log_message(f"Starting {name} animation generation")
-            create_func(suffix, duration)
+            create_func(suffix, duration, config)
             success_count += 1
             log_message(f"Completed {name} animation successfully")
         except Exception as e:
@@ -4938,22 +6086,20 @@ def generate_all_1D_animations(suffix, duration):
 def _extract_Rank_snapnum(fname, suffix):
     """
     Extract snapshot number from a rank file name.
-
-    Parameters
-    ----------
-    fname : str
-        The filename.
-    suffix : str
-        The suffix to remove from the filename.
-
-    Returns
-    -------
-    int
-        The snapshot number.
+    Now handles both sorted and unsorted file patterns.
     """
-    mo = re.search(r'Rank_Mass_Rad_VRad_sorted_t(\d+)' + re.escape(suffix) + r'\.dat$', fname)
+    # Try sorted pattern first
+    pattern_sorted = r'Rank_Mass_Rad_VRad_sorted_t(\d+)' + re.escape(suffix) + r'\.dat$'
+    mo = re.search(pattern_sorted, fname)
     if mo:
         return int(mo.group(1))
+
+    # Fallback to unsorted pattern
+    pattern_unsorted = r'Rank_Mass_Rad_VRad_unsorted_t(\d+)' + re.escape(suffix) + r'\.dat$'
+    mo = re.search(pattern_unsorted, fname)
+    if mo:
+        return int(mo.group(1))
+
     return 999999999
 
 def calculate_reasonable_vmax(H):
@@ -5021,17 +6167,14 @@ def render_phase_frame(frame_data):
     numpy.ndarray
         Image data for the rendered frame.
     """
-    # Unpack the data including total_snapshots
-    snap_num, H, vmax, tfinal_factor, total_snapshots = frame_data
+    snap_num, H, vmax_colorscale, tfinal_factor, total_snapshots, plot_range_r_tuple, plot_range_v_tuple = frame_data
 
-    # Set up histogram parameters
-    max_r_all = 250.0
-    max_v_all = 320.0
-    nbins = H.shape[0]  # Assuming square histogram
+    # Set up histogram parameters using passed full ranges
+    nbins = H.shape[0]  # H was binned using these ranges in preprocess
 
-    # Recreate the meshgrid for pcolormesh
-    xedges = np.linspace(0, max_r_all, nbins + 1)
-    yedges = np.linspace(0, max_v_all, nbins + 1)
+    # Recreate the meshgrid for pcolormesh using the exact min/max from tuples
+    xedges = np.linspace(plot_range_r_tuple[0], plot_range_r_tuple[1], nbins + 1)
+    yedges = np.linspace(plot_range_v_tuple[0], plot_range_v_tuple[1], nbins + 1)
     X, Y = np.meshgrid(xedges[:-1], yedges[:-1])
     C = H.T  # Transpose for correct orientation
 
@@ -5041,14 +6184,14 @@ def render_phase_frame(frame_data):
 
     # Plot the phase space - Get the colormap from this call to use consistently
     cmap = plt.cm.viridis  # Default colormap
-    pcm = plt.pcolormesh(X, Y, C, shading='auto', cmap=cmap, vmin=0, vmax=vmax)
+    pcm = plt.pcolormesh(X, Y, C, shading='auto', cmap=cmap, vmin=0, vmax=vmax_colorscale)
     cbar = plt.colorbar(pcm)
     cbar.set_label('Counts', fontsize=12)
     plt.xlabel(r'$r$ (kpc)', fontsize=12)
     plt.ylabel(r'$v$ (km/s)', fontsize=12)
     plt.title('Phase Space Distribution Evolution', fontsize=14, pad=20)
-    plt.xlim(0, max_r_all)
-    plt.ylim(0, max_v_all)
+    plt.xlim(plot_range_r_tuple) # Pass the tuple directly
+    plt.ylim(plot_range_v_tuple) # Pass the tuple directly
 
     # Calculate time in dynamical times using the tfinal_factor and passed total_snapshots
     if total_snapshots and total_snapshots > 1:
@@ -5085,10 +6228,17 @@ def render_phase_frame(frame_data):
     # Return the image
     return imageio.imread(buf)
 
-def generate_initial_phase_histogram(suffix):
+def generate_initial_phase_histogram(suffix, config=None):
     """
     Creates a phase space histogram from the initial particles.dat file.
     This represents the true initial distribution.
+    
+    Parameters
+    ----------
+    suffix : str
+        Suffix for file naming
+    config : dict, optional
+        Configuration dictionary with plot settings
     """
     # Constants for expected number of columns
     ncol_particles_initial = 4
@@ -5162,17 +6312,32 @@ def generate_initial_phase_histogram(suffix):
     # Start progress tracking for plot saving
     start_combined_progress("phase_space_plots", 1)
 
-    # Set up histogram parameters
-    max_r_all = 250.0
-    max_v_all = 320.0
+    # Set up histogram parameters using robust ranging
     nbins = 200
+    
+    # Calculate dynamic ranges using the robust range helper
+    r_min, r_max = _calculate_robust_range(
+        iradii, percentile=config.x_percentile,
+        percentile_multiplier=config.x_percentile_multiplier,
+        min_abs_extent=config.min_x_range_abs,
+        default_if_empty=(0, 250.0), can_be_negative=False,
+        axis_name="radius"
+    )
+    
+    v_min, v_max = _calculate_robust_range(
+        ivelocities, percentile=config.y_percentile,
+        percentile_multiplier=config.y_percentile_multiplier,
+        min_abs_extent=config.min_y_range_abs, 
+        default_if_empty=(0, 320.0), can_be_negative=False,
+        axis_name="velocity"
+    )
 
     # Create the 2D histogram
     H, xedges, yedges = np.histogram2d(
         iradii,
         ivelocities,
         bins=[nbins, nbins],
-        range=[[0, max_r_all], [0, max_v_all]]
+        range=[[r_min, r_max], [v_min, v_max]]
     )
 
     # Create meshgrid for pcolormesh
@@ -5193,9 +6358,9 @@ def generate_initial_phase_histogram(suffix):
     plt.ylabel(r'$v$ (km/s)', fontsize=12)
     plt.title(r'Initial Phase Space Distribution', fontsize=14)
 
-    # Set consistent limits
-    plt.xlim(0, max_r_all)
-    plt.ylim(0, max_v_all)
+    # Set consistent limits using calculated ranges
+    plt.xlim(r_min, r_max)
+    plt.ylim(v_min, v_max)
 
 
     os.makedirs("results", exist_ok=True)
@@ -5215,9 +6380,16 @@ def generate_initial_phase_histogram(suffix):
 
     return True
 
-def generate_comparison_plot(suffix):
+def generate_comparison_plot(suffix, config=None):
     """
     Creates a side-by-side comparison of the initial and last available snapshot phase space histograms.
+    
+    Parameters
+    ----------
+    suffix : str
+        Suffix for file naming
+    config : dict, optional
+        Configuration dictionary with plot settings
     """
     # Constants for expected number of columns
     ncol_particles_initial = 4
@@ -5227,13 +6399,13 @@ def generate_comparison_plot(suffix):
     particles_file = f"data/particles{suffix}.dat"
 
     # Find the last available snapshot file
-    rank_files = glob.glob(f"data/Rank_Mass_Rad_VRad_sorted_t*{suffix}.dat")
+    rank_files = glob.glob(f"data/Rank_Mass_Rad_VRad_sorted_t*{config.suffix}.dat")
     if not rank_files:
         print_status("No snapshot files found.")
         return False
 
     # Sort files by snapshot number and get the last one
-    rank_files.sort(key=lambda fname: _extract_Rank_snapnum(fname, suffix))
+    rank_files.sort(key=lambda fname: _extract_Rank_snapnum(fname, config.suffix))
     last_snap_file = rank_files[-1]
     last_snap_num = _extract_Rank_snapnum(last_snap_file, suffix)
 
@@ -5359,24 +6531,43 @@ def generate_comparison_plot(suffix):
     histogram_file = f"data/creating_histograms{suffix}.dat"
     update_combined_progress("phase_space_loading", histogram_file)
 
-    # Set up histogram parameters
-    max_r_all = 250.0
-    max_v_all = 320.0
+    # Set up histogram parameters using robust ranging
     nbins = 200
+    
+    # Calculate global ranges covering both datasets
+    combined_radii = np.concatenate([iradii, radii])
+    combined_velocities = np.concatenate([ivelocities, total_velocity])
+    
+    # Calculate dynamic ranges using the robust range helper
+    r_min, r_max = _calculate_robust_range(
+        combined_radii, percentile=config.x_percentile,
+        percentile_multiplier=config.x_percentile_multiplier,
+        min_abs_extent=config.min_x_range_abs,
+        default_if_empty=(0, 250.0), can_be_negative=False,
+        axis_name="radius"
+    )
+    
+    v_min, v_max = _calculate_robust_range(
+        combined_velocities, percentile=config.y_percentile,
+        percentile_multiplier=config.y_percentile_multiplier,
+        min_abs_extent=config.min_y_range_abs, 
+        default_if_empty=(0, 320.0), can_be_negative=False,
+        axis_name="velocity"
+    )
 
     # Create the 2D histograms
     H_initial, xedges_initial, yedges_initial = np.histogram2d(
         iradii,
         ivelocities,
         bins=[nbins, nbins],
-        range=[[0, max_r_all], [0, max_v_all]]
+        range=[[r_min, r_max], [v_min, v_max]]
     )
 
     H_last_snap, xedges_last_snap, yedges_last_snap = np.histogram2d(
         radii,
         total_velocity,
         bins=[nbins, nbins],
-        range=[[0, max_r_all], [0, max_v_all]]
+        range=[[r_min, r_max], [v_min, v_max]]
     )
 
     # Print histogram statistics for comparison
@@ -5404,15 +6595,15 @@ def generate_comparison_plot(suffix):
     ax1.set_xlabel(r'$r$ (kpc)', fontsize=12)
     ax1.set_ylabel(r'$v$ (km/s)', fontsize=12)
     ax1.set_title(r'Initial Phase Space', fontsize=14)
-    ax1.set_xlim(0, max_r_all)
-    ax1.set_ylim(0, max_v_all)
+    ax1.set_xlim(r_min, r_max)
+    ax1.set_ylim(v_min, v_max)
 
     
     pcm2 = ax2.pcolormesh(X_last_snap, Y_last_snap, C_last_snap, shading='auto', cmap='viridis', vmin=0, vmax=vmax)
     ax2.set_xlabel(r'$r$ (kpc)', fontsize=12)
     ax2.set_title(fr'Final Phase Space (Snapshot $t={last_snap_num}$)', fontsize=14)
-    ax2.set_xlim(0, max_r_all)
-    ax2.set_ylim(0, max_v_all)
+    ax2.set_xlim(r_min, r_max)
+    ax2.set_ylim(v_min, v_max)
 
     
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
@@ -5454,8 +6645,8 @@ def generate_comparison_plot(suffix):
     ax.set_xlabel(r'$r$ (kpc)', fontsize=12)
     ax.set_ylabel(r'$v$ (km/s)', fontsize=12)
     ax.set_title(fr'Phase Space Difference (Final - Initial)', fontsize=14)
-    ax.set_xlim(0, max_r_all)
-    ax.set_ylim(0, max_v_all)
+    ax.set_xlim(r_min, r_max)
+    ax.set_ylim(v_min, v_max)
 
     
     cbar = fig.colorbar(pcm_diff)
@@ -5500,7 +6691,7 @@ def plot_convergence_test(Nint_arr, Nspl_arr, basefile, suffix, xlabel, ylabel, 
     output_file : str
         Output file path.
     """
-    plt.figure(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
 
     # Determine number of columns based on basefile
     ncols = ncol_convergence # Default for most convergence files
@@ -5515,6 +6706,7 @@ def plot_convergence_test(Nint_arr, Nspl_arr, basefile, suffix, xlabel, ylabel, 
     elif basefile == "integrand":
         ncols = ncol_integrand
 
+    has_data = False
     for Nint in Nint_arr:
         for Nspl in Nspl_arr:
             filepath = f"data/{basefile}_Ni{Nint}_Ns{Nspl}{suffix}.dat"
@@ -5532,24 +6724,40 @@ def plot_convergence_test(Nint_arr, Nspl_arr, basefile, suffix, xlabel, ylabel, 
             if len(filtered_data) == 0:
                 continue
 
+            # Additional filtering for log-log plots: remove zero or negative values
+            log_mask = (filtered_data[:, 0] > 0) & (filtered_data[:, 1] > 0)
+            filtered_data = filtered_data[log_mask]
+            
+            if len(filtered_data) == 0:
+                continue
 
-            plt.plot(
+            ax.plot(
                 filtered_data[:, 0],
                 filtered_data[:, 1],
                 label=r"$N_{\rm int}=%d$, $N_{\rm spl}=%d$" % (Nint, Nspl)
             )
+            has_data = True
 
-    plt.xlabel(xlabel, fontsize=12)
-    plt.ylabel(ylabel, fontsize=12)
-    plt.title(title, fontsize=14)
-    plt.legend(fontsize=10)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.savefig(output_file, dpi=150)
-    plt.close()
+    if has_data:
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12)
+        ax.set_title(title, fontsize=14)
+        ax.legend(fontsize=10)
+        ax.grid(True, linestyle='--', alpha=0.7, which='both')
+        
+        # Set log-log scale
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        
+        plt.tight_layout()
+        plt.savefig(output_file, dpi=150)
+        plt.close()
 
-    # Log to file only, no console output
-    logger.info(f"Plot saved: {output_file}")
+        # Log to file only, no console output
+        logger.info(f"Plot saved: {output_file}")
+    else:
+        plt.close()
+        logger.warning(f"No valid data found for convergence test plot: {output_file}")
 
     # Progress tracking is handled by the caller
 
@@ -5700,7 +6908,9 @@ def process_rank_files(suffix, start_snap, end_snap, step_snap):
     unsorted_pattern = f"data/Rank_Mass_Rad_VRad_unsorted_t*{suffix}.dat"
     unsorted_files = glob.glob(unsorted_pattern)
 
-    # Filter to keep ONLY files that match the exact pattern, same as with the sorted files
+    # Filter unsorted files as well
+    correct_unsorted_pattern = re.compile(r'data/Rank_Mass_Rad_VRad_unsorted_t\d+' + re.escape(suffix) + r'\.dat$')
+    unsorted_files = [f for f in unsorted_files if correct_unsorted_pattern.match(f)]
     correct_unsorted_pattern = re.compile(r'data/Rank_Mass_Rad_VRad_unsorted_t\d+' + re.escape(suffix) + r'\.dat$')
     unsorted_files = [f for f in unsorted_files if correct_unsorted_pattern.match(f)]
     logger.info(f"Found {len(all_rank_files)} rank sorted snapshot files and {len(unsorted_files)} unsorted snapshot files.")
@@ -6195,9 +7405,9 @@ def generate_sorted_energy_plot(suffix):
         logger.error(traceback.format_exc())
         return None
 
-def create_mass_animation(suffix, duration):
+def create_mass_animation(suffix, duration, config=None):
     """
-    Create mass profile animation.
+    Create mass profile animation with optional robust ranging.
 
     Parameters
     ----------
@@ -6205,6 +7415,9 @@ def create_mass_animation(suffix, duration):
         Suffix for input/output files.
     duration : float
         Duration of each frame in milliseconds.
+    config : object, optional
+        Configuration object containing plot settings. If provided and has
+        use_median_ranges=True, will use robust ranging for axes.
         
     Returns
     -------
@@ -6217,6 +7430,8 @@ def create_mass_animation(suffix, duration):
     Saves the animation incrementally using `imageio.get_writer` to reduce
     peak memory usage compared to collecting all frames first.
     Requires imageio v2 (`pip install imageio==2.*`).
+    With robust ranging enabled, calculates data-driven axis limits based
+    on the median of the data distribution.
     """
     global mass_snapshots, mass_max_value
     
@@ -6242,15 +7457,31 @@ def create_mass_animation(suffix, duration):
             # Use default if parsing fails
             pass
             
-    # Calculate r_max for consistent plotting - do this once before creating the pool
-    r_max = 1.1 * np.max([np.max(r) for _, r, _ in mass_snapshots if len(r) > 0])
-    r_max = min(200, r_max)  # Cap at 200 kpc for reasonable display
+    # Calculate axis ranges for consistent plotting
+    x_range, y_max = _calculate_profile_animation_ranges(
+        mass_snapshots, config, data_index=2, x_default_max=200.0,
+        animation_name="Mass"
+    )
+    
+    if x_range is not None and y_max is not None:
+        # Use calculated ranges
+        r_min, r_max = x_range
+        m_min = 0  # Mass is always non-negative
+        mass_max_value = y_max
+    else:
+        # Original hardcoded logic
+        r_max = 1.1 * np.max([np.max(r) for _, r, _ in mass_snapshots if len(r) > 0])
+        r_max = min(200, r_max)  # Cap at 200 kpc for reasonable display
+        r_min = 0  # Mass profiles always start at r=0
+        m_min = 0  # Mass is always non-negative
 
-    # Create frame_data tuples with the actual snapshot data, tfinal_factor, total_frames, r_max and project_root_path
+    # Create frame_data tuples with the actual snapshot data and range information
     if not mass_snapshots:
         print_status("Error: mass_snapshots list is empty before pool creation.")
         return # Handle error appropriately
-    frame_data_list = [(mass_snapshots[i], tfinal_factor, total_frames, r_max, PROJECT_ROOT) for i in range(total_frames)]
+    frame_data_list = [(mass_snapshots[i], tfinal_factor, total_frames, 
+                        (r_min, r_max), (m_min, mass_max_value), PROJECT_ROOT) 
+                       for i in range(total_frames)]
 
     # Set up imageio writer
     mass_anim_output = f"results/Mass_Profile_Animation{suffix}.gif"
@@ -6343,7 +7574,7 @@ def create_mass_animation(suffix, duration):
     # Encourage garbage collection
     gc.collect()
 
-def create_density_animation(suffix, duration):
+def create_density_animation(suffix, duration, config=None):
     """
     Create density profile animation.
 
@@ -6353,6 +7584,9 @@ def create_density_animation(suffix, duration):
         Suffix for input/output files.
     duration : float
         Duration of each frame in milliseconds.
+    config : Configuration, optional
+        Configuration object containing plot settings. If provided,
+        enables robust dynamic ranging for axes.
         
     Returns
     -------
@@ -6373,9 +7607,15 @@ def create_density_animation(suffix, duration):
         return
         
     # Calculate global maximum values for consistent scaling
-    # This only needs to be called once, but we call it for each animation
-    # to ensure it's always calculated even if only one animation is requested
-    calculate_global_max_values()
+    x_range, y_max = _calculate_profile_animation_ranges(
+        density_snapshots, config, data_index=2, x_default_max=300.0,
+        animation_name="Density"
+    )
+    
+    if y_max is not None:
+        density_max_value = y_max
+    else:
+        calculate_global_max_values()
 
     total_frames = len(density_snapshots)
     # Log detailed info to file only
@@ -6393,14 +7633,29 @@ def create_density_animation(suffix, duration):
             pass
             
     # Calculate r_max for consistent plotting - do this once before creating the pool
-    r_max = 1.1 * np.max([np.max(r) for _, r, _ in density_snapshots if len(r) > 0])
-    r_max = min(300, r_max)  # Cap at 300 kpc for reasonable display
+    if x_range is not None:
+        r_max = x_range[1]  # Use the calculated range from helper function
+    else:
+        # Original hardcoded behavior when not using median ranges
+        r_max = 1.1 * np.max([np.max(r) for _, r, _ in density_snapshots if len(r) > 0])
+        r_max = min(300, r_max)  # Cap at 300 kpc for reasonable display
 
-    # Create frame_data tuples with the actual snapshot data, tfinal_factor, total_frames, r_max and project_root_path
+    # Create frame_data tuples with the actual snapshot data, tfinal_factor, total_frames, ranges and project_root_path
     if not density_snapshots:
         print_status("Error: density_snapshots list is empty before pool creation.")
         return # Handle error appropriately
-    frame_data_list = [(density_snapshots[i], tfinal_factor, total_frames, r_max, PROJECT_ROOT) for i in range(total_frames)]
+    
+    # Prepare range information
+    if config and hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+        # Use calculated robust ranges
+        r_range = (0, r_max)  # Density profiles always start at r=0
+        d_range = (0, density_max_value if density_max_value > 0 else 1.2e10)
+    else:
+        # Use original behavior
+        r_range = (0, r_max)
+        d_range = (0, density_max_value if density_max_value > 0 else 1.2e10)
+    
+    frame_data_list = [(density_snapshots[i], tfinal_factor, total_frames, r_range, d_range, PROJECT_ROOT) for i in range(total_frames)]
 
     # Set up imageio writer
     density_anim_output = f"results/Density_Profile_Animation{suffix}.gif"
@@ -6493,7 +7748,7 @@ def create_density_animation(suffix, duration):
     # Encourage garbage collection
     gc.collect()
 
-def create_psi_animation(suffix, duration):
+def create_psi_animation(suffix, duration, config=None):
     """
     Create psi profile animation.
 
@@ -6503,6 +7758,9 @@ def create_psi_animation(suffix, duration):
         Suffix for input/output files.
     duration : float
         Duration of each frame in milliseconds.
+    config : Configuration, optional
+        Configuration object containing plot settings. If provided,
+        enables robust dynamic ranging for axes.
         
     Returns
     -------
@@ -6523,9 +7781,15 @@ def create_psi_animation(suffix, duration):
         return
         
     # Calculate global maximum values for consistent scaling
-    # This only needs to be called once, but we call it for each animation
-    # to ensure it's always calculated even if only one animation is requested
-    calculate_global_max_values()
+    x_range, y_max = _calculate_profile_animation_ranges(
+        psi_snapshots, config, data_index=2, x_default_max=250.0,
+        animation_name="Psi"
+    )
+    
+    if y_max is not None:
+        psi_max_value = y_max
+    else:
+        calculate_global_max_values()
 
     total_frames = len(psi_snapshots)
     # Log detailed info to file only
@@ -6543,14 +7807,29 @@ def create_psi_animation(suffix, duration):
             pass
             
     # Calculate r_max for consistent plotting - do this once before creating the pool
-    r_max = 1.1 * np.max([np.max(r) for _, r, _ in psi_snapshots if len(r) > 0])
-    r_max = min(250, r_max)  # Cap at 250 kpc for reasonable display
+    if x_range is not None:
+        r_max = x_range[1]  # Use the calculated range from helper function
+    else:
+        # Original hardcoded behavior when not using median ranges
+        r_max = 1.1 * np.max([np.max(r) for _, r, _ in psi_snapshots if len(r) > 0])
+        r_max = min(250, r_max)  # Cap at 250 kpc for reasonable display
 
-    # Create frame_data tuples with the actual snapshot data, tfinal_factor, total_frames, r_max and project_root_path
+    # Create frame_data tuples with the actual snapshot data, tfinal_factor, total_frames, ranges and project_root_path
     if not psi_snapshots:
         print_status("Error: psi_snapshots list is empty before pool creation.")
         return # Handle error appropriately
-    frame_data_list = [(psi_snapshots[i], tfinal_factor, total_frames, r_max, PROJECT_ROOT) for i in range(total_frames)]
+    
+    # Prepare range information
+    if config and hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+        # Use calculated robust ranges
+        r_range = (0, r_max)  # Psi profiles always start at r=0
+        p_range = (0, psi_max_value if psi_max_value > 0 else 0.072)
+    else:
+        # Use original behavior
+        r_range = (0, r_max)
+        p_range = (0, psi_max_value if psi_max_value > 0 else 0.072)
+    
+    frame_data_list = [(psi_snapshots[i], tfinal_factor, total_frames, r_range, p_range, PROJECT_ROOT) for i in range(total_frames)]
 
     # Set up imageio writer
     psi_anim_output = f"results/Psi_Profile_Animation{suffix}.gif"
@@ -6682,7 +7961,7 @@ def process_single_rank_file_for_histogram(suffix):
 
     return data
 
-def generate_rank_histogram(rank_decimated_data, suffix, output_file=None):
+def generate_rank_histogram(rank_decimated_data, suffix, output_file=None, config=None):
     """
     Generate 2D histogram from rank data.
 
@@ -6695,6 +7974,8 @@ def generate_rank_histogram(rank_decimated_data, suffix, output_file=None):
         Suffix for input/output files.
     output_file : str, optional
         Custom output file path. If None, a default path will be used.
+    config : dict, optional
+        Configuration dictionary with plot settings
     """
     logger.info("Generating histograms from rank data...")
 
@@ -6741,16 +8022,30 @@ def generate_rank_histogram(rank_decimated_data, suffix, output_file=None):
     kmsec_to_kpcmyr = 1.0227e-3  # Conversion factor
     total_velocity = total_velocity_internal * (1.0 / kmsec_to_kpcmyr)
 
-    # Set up histogram parameters
-    max_r_all = 250.0
-    max_v_all = 320.0
+    # Set up histogram parameters using robust ranging
+    # Calculate dynamic ranges using the robust range helper
+    r_min, r_max = _calculate_robust_range(
+        radii_nz, percentile=config.x_percentile,
+        percentile_multiplier=config.x_percentile_multiplier,
+        min_abs_extent=config.min_x_range_abs,
+        default_if_empty=(0, 250.0), can_be_negative=False,
+        axis_name="radius"
+    )
+    
+    v_min, v_max = _calculate_robust_range(
+        total_velocity, percentile=config.y_percentile,
+        percentile_multiplier=config.y_percentile_multiplier,
+        min_abs_extent=config.min_y_range_abs, 
+        default_if_empty=(0, 320.0), can_be_negative=False,
+        axis_name="velocity"
+    )
 
     # Create the 2D histogram using non-zero radius data
     hist, xedges, yedges = np.histogram2d(
         radii_nz,
         total_velocity,
-        bins=[200, 200],
-        range=[[0, max_r_all], [0, max_v_all]]
+        bins=[400, 400],
+        range=[[r_min, r_max], [v_min, v_max]]
     )
 
     # Transpose for correct orientation
@@ -6764,8 +8059,8 @@ def generate_rank_histogram(rank_decimated_data, suffix, output_file=None):
     plt.ylabel(r'$v$ (km/s)', fontsize=12)
 
     plt.title(r'Initial Phase Space Distribution', fontsize=14)
-    plt.xlim(0, 250)
-    plt.ylim(0, 320)
+    plt.xlim(r_min, r_max)
+    plt.ylim(v_min, v_max)
 
 
     if output_file is None:
@@ -6783,6 +8078,9 @@ def process_variable_histograms(config):
     """
     Generates 1D variable distribution histograms comparing initial vs final distributions.
     Creates histograms for radius, velocity, radial velocity, and angular momentum.
+    
+    Note: This function creates 1D distributions, not 2D phase space plots,
+    so it does not require robust ranging modifications.
     
     Parameters
     ----------
@@ -6866,11 +8164,11 @@ def process_variable_histograms(config):
     log_message("Data loading complete.", level="info")
 
     log_message("Processing particle data...", level="info")
-    init_r, init_vr, init_L, init_vtot = process_particle_data(initial_raw_data, ncol_particles_initial)
-    final_r, final_vr, final_L, final_vtot = process_particle_data(final_unsorted_raw_data, ncol_Rank_Mass_Rad_VRad_unsorted)
+    init_r, init_vr, init_L, init_vtot, init_vperp = process_particle_data(initial_raw_data, ncol_particles_initial)
+    final_r, final_vr, final_L, final_vtot, final_vperp = process_particle_data(final_unsorted_raw_data, ncol_Rank_Mass_Rad_VRad_unsorted)
 
-    processed_data_valid = all(d is not None for d in [init_r, init_vr, init_L, init_vtot,
-                                                      final_r, final_vr, final_L, final_vtot])
+    processed_data_valid = all(d is not None for d in [init_r, init_vr, init_L, init_vtot, init_vperp,
+                                                      final_r, final_vr, final_L, final_vtot, final_vperp])
     if not processed_data_valid:
         log_message("Could not extract valid data after processing.", level="error")
         print_status("Error: Could not extract valid data after processing.")
@@ -6878,16 +8176,53 @@ def process_variable_histograms(config):
     log_message("Particle data processing complete.", level="info")
 
     # --- Define plot specifications with refined labels and titles ---
+    # Calculate robust ranges for radius and velocity if config enables it
+    if config and hasattr(config, 'use_median_ranges') and config.use_median_ranges:
+        # Calculate robust range for radius
+        combined_r = np.concatenate([init_r, final_r])
+        r_min, r_max = _calculate_robust_range(
+            combined_r, 
+            percentile=config.x_percentile,
+            percentile_multiplier=config.x_percentile_multiplier,
+            min_abs_extent=config.min_x_range_abs,
+            default_if_empty=(0, 250.0), 
+            can_be_negative=False,
+            axis_name="1D radius histogram"
+        )
+        radius_range = [r_min, r_max]
+        
+        # Calculate robust range for velocity
+        combined_v = np.concatenate([init_vtot, final_vtot])
+        v_min, v_max = _calculate_robust_range(
+            combined_v, 
+            percentile=config.y_percentile,
+            percentile_multiplier=config.y_percentile_multiplier,
+            min_abs_extent=config.min_y_range_abs,
+            default_if_empty=(0, 500.0), 
+            can_be_negative=False,
+            axis_name="1D velocity histogram"
+        )
+        velocity_range = [v_min, v_max]
+    else:
+        # Use original hardcoded ranges
+        radius_range = [0, 250]
+        velocity_range = [0, 500]
+    
     plot_vars = [
         {'data1': init_r, 'data2': final_r,
          'xlabel': r'$r$ (kpc)',
          'title': r'Comparison of Radius Distribution $N(r)$',
-         'filename': f'radius_hist_compare{suffix}.png', 'range': [0, 250]},
+         'filename': f'radius_hist_compare{suffix}.png', 'range': radius_range},
 
         {'data1': init_vtot, 'data2': final_vtot,
          'xlabel': r'$v$ (km/s)',
          'title': r'Comparison of Total Velocity Distribution $N(v)$',
-         'filename': f'total_velocity_histogram_compare{suffix}.png', 'range': [0, 500]},
+         'filename': f'total_velocity_histogram_compare{suffix}.png', 'range': velocity_range},
+
+        {'data1': init_vperp, 'data2': final_vperp,
+         'xlabel': r'$v_{\perp}$ (km/s)',
+         'title': r'Comparison of Tangential Velocity Magnitude Distribution $N(v_{\perp})$',
+         'filename': f'tangential_velocity_histogram_compare{suffix}.png', 'range': None, 'plot_func': plot_tangential_velocity_histogram},
 
         {'data1': init_vr, 'data2': final_vr,
          'xlabel': r'$v_r$ (km/s)',
@@ -6911,37 +8246,50 @@ def process_variable_histograms(config):
     for i, spec in enumerate(plot_vars, 1):
         output_path = os.path.join("results", spec['filename'])
         log_message(f"Generating plot: {output_path}", level="info")
-        plt.figure(figsize=(10, 6))
-        bins = 100
-        hist_range = spec['range']
-        if hist_range is None:
-            combined = np.concatenate((spec['data1'], spec['data2']))
-            finite = combined[np.isfinite(combined)]
-            if finite.size > 0: 
-                hist_range = (np.min(finite), np.max(finite))
-            else: 
-                hist_range = (-1, 1)
+        
+        if 'plot_func' in spec:  # Check if a custom plot function is specified
+            try:
+                spec['plot_func'](spec['data1'], spec['data2'], output_path, plot_range=spec.get('range'))
+                plots_generated += 1
+                update_combined_progress(saving_section_key, output_path)
+                log_message(f"Plot saved: {output_path}", level="debug")
+            except Exception as e:
+                clear_line()
+                log_message(f"Error generating plot {output_path}: {e}", level="error")
+                print(f"\nError generating plot for {spec['xlabel']}: {e}")
+                update_combined_progress(saving_section_key, output_path)  # Pass path for prefix
+        else:  # Original histogram plotting logic
+            plt.figure(figsize=(10, 6))
+            bins = 100
+            hist_range = spec['range']
+            if hist_range is None:
+                combined = np.concatenate((spec['data1'], spec['data2']))
+                finite = combined[np.isfinite(combined)]
+                if finite.size > 0: 
+                    hist_range = (np.min(finite), np.max(finite))
+                else: 
+                    hist_range = (-1, 1)
 
-        try:
-            plt.hist(spec['data1'], bins=bins, range=hist_range, alpha=0.6, color='blue', label='Initial', density=True)
-            plt.hist(spec['data2'], bins=bins, range=hist_range, alpha=0.6, color='red', label='Final', density=True)
-            plt.xlabel(spec['xlabel'], fontsize=12)
-            plt.ylabel('Normalized Frequency', fontsize=12)
-            plt.title(spec['title'], fontsize=14)
-            plt.legend(fontsize=12)
-            plt.grid(True, linestyle='--', alpha=0.7)  # Match nsphere_plot grid style
-            plt.tight_layout()
-            plt.savefig(output_path, dpi=150)  # Consistent DPI
-            plots_generated += 1
-            update_combined_progress(saving_section_key, output_path)
-            log_message(f"Plot saved: {output_path}", level="debug")
-        except Exception as e:
-            clear_line()
-            log_message(f"Error generating plot {output_path}: {e}", level="error")
-            print(f"\nError generating plot for {spec['xlabel']}: {e}")
-            update_combined_progress(saving_section_key, output_path)  # Pass path for prefix
-        finally:
-            plt.close()
+            try:
+                plt.hist(spec['data1'], bins=bins, range=hist_range, alpha=0.6, color='blue', label='Initial', density=True)
+                plt.hist(spec['data2'], bins=bins, range=hist_range, alpha=0.6, color='red', label='Final', density=True)
+                plt.xlabel(spec['xlabel'], fontsize=12)
+                plt.ylabel('Normalized Frequency', fontsize=12)
+                plt.title(spec['title'], fontsize=14)
+                plt.legend(fontsize=12)
+                plt.grid(True, linestyle='--', alpha=0.7)  # Match nsphere_plot grid style
+                plt.tight_layout()
+                plt.savefig(output_path, dpi=150)  # Consistent DPI
+                plots_generated += 1
+                update_combined_progress(saving_section_key, output_path)
+                log_message(f"Plot saved: {output_path}", level="debug")
+            except Exception as e:
+                clear_line()
+                log_message(f"Error generating plot {output_path}: {e}", level="error")
+                print(f"\nError generating plot for {spec['xlabel']}: {e}")
+                update_combined_progress(saving_section_key, output_path)  # Pass path for prefix
+            finally:
+                plt.close()
 
     # Corrected Footer message logic
     if plots_generated == num_plots:
@@ -6972,10 +8320,10 @@ def generate_all_2d_histograms(config, rank_decimated_data=None):
     start_combined_progress("histogram_plots", total_histograms)
 
     # Process particles histograms with combined progress
-    plot_particles_histograms(config.suffix, progress_callback=lambda output_file: update_combined_progress("histogram_plots", output_file))
+    plot_particles_histograms(config.suffix, progress_callback=lambda output_file: update_combined_progress("histogram_plots", output_file), config=config)
 
     # Process nsphere histograms with combined progress
-    plot_nsphere_histograms(config.suffix, progress_callback=lambda output_file: update_combined_progress("histogram_plots", output_file))
+    plot_nsphere_histograms(config.suffix, progress_callback=lambda output_file: update_combined_progress("histogram_plots", output_file), config=config)
 
     # For rank histogram, only a single file is needed
     logger.info("Generating histograms from rank data...")
@@ -6984,7 +8332,7 @@ def generate_all_2d_histograms(config, rank_decimated_data=None):
     # Generate rank histogram if we have data
     rank_output_file = f"results/part_data_histogram_initial{config.suffix}.png"
     if single_rank_data is not None:
-        generate_rank_histogram(single_rank_data, config.suffix, rank_output_file)
+        generate_rank_histogram(single_rank_data, config.suffix, rank_output_file, config)
         update_combined_progress("histogram_plots", rank_output_file)
     # No fallback available for histogram generation
 
@@ -7071,6 +8419,14 @@ def generate_all_energy_plots(config, file_paths, unsorted_energy_data):
 
         # Generate the sorted energy plot
         sorted_output = generate_sorted_energy_plot(config.suffix)
+        
+        # Generate total energy diagnostics plot if file exists
+        total_energy_file = file_paths.get("total_energy_vs_time", "")
+        if os.path.exists(total_energy_file):
+            output_file = f"results/total_energy_diagnostics{config.suffix}.png"
+            total_energy_output = plot_total_energy_diagnostics(total_energy_file, output_file)
+            if total_energy_output:
+                logger.info(f"Total energy diagnostics plot saved to {total_energy_output}")
 
         # Calculate final timing statistics
         elapsed = time.time() - energy_plot_start_time
@@ -7204,13 +8560,13 @@ def main():
         # Skip if explicitly told not to generate phase space plots
         if not config.args.no_phase_space:
             print_header("Generating Phase Space Initial Histogram")
-            generate_initial_phase_histogram(config.suffix)
+            generate_initial_phase_histogram(config.suffix, config=config)
             print_footer("Initial phase space histogram created successfully.")
 
             # If phase_space_only is true, also generate the animation right away
             if config.args.phase_space:
                 print_header("Generating Phase Space Animation")
-                generate_phase_space_animation(config.suffix, fps=config.fps)
+                generate_phase_space_animation(config, fps=config.fps)
                 # Add separator and completion message for phase space animation
                 sys.stdout.write(get_separator_line(char='-') + "\n")
                 print_status("Phase space animation generated successfully.")
@@ -7222,7 +8578,7 @@ def main():
         # Skip if explicitly told not to generate phase comparison
         if not config.args.no_phase_comparison:
             print_header("Generating Phase Space Comparison")
-            generate_comparison_plot(config.suffix)
+            generate_comparison_plot(config.suffix, config=config)
             print_footer("Phase space comparison created successfully.")
             
     # --- Generate 1D Variable Distributions ---
@@ -7237,7 +8593,7 @@ def main():
             # Setup file paths
             file_paths = config.setup_file_paths()
             print_header("Generating Profile Plots")
-            process_profile_plots(file_paths)
+            process_profile_plots(file_paths, config)
             print_footer("Profile plots generated successfully.")
 
     # Process trajectory plots if requested or in normal mode
@@ -7308,7 +8664,7 @@ def main():
 
         # Use parallel processing internally for animations; manage progress sequentially here
         # This provides parallel processing with clean progress output
-        generate_all_1D_animations(config.suffix, config.duration)
+        generate_all_1D_animations(config.suffix, config.duration, config)
 
         # Add completion message for profile animations (no separator needed here)
         print_status("Mass, density, and psi animations generated successfully.")
@@ -7316,7 +8672,7 @@ def main():
         # Generate phase space animation if not explicitly disabled and not already generated
         if not config.args.no_phase_space and not config.args.phase_space:  # Skip if already generated in phase-space-only mode
             print_header("Generating Phase Space Animation")
-            generate_phase_space_animation(config.suffix, fps=config.fps)
+            generate_phase_space_animation(config, fps=config.fps) # Pass full config
             # Add completion message for phase space animation (separator is already added in the function)
             print_status("Phase space animation generated successfully.")
             # Log this message to file only, not to console
