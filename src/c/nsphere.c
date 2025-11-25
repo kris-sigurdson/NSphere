@@ -167,10 +167,10 @@ threevector crossproduct(threevector X, threevector Y);
 double sigmatotal(double vrel, int npts, double halo_mass_for_calc, double rc_for_calc);
 
 // Serial SIDM scattering integration function declaration
-void perform_sidm_scattering_serial(double **particles, int npts, double dt, double current_time, gsl_rng *rng, long long *Nscatter_total_step, double halo_mass_for_sidm, double rc_for_sidm, int *current_scatter_counts);
+void perform_sidm_scattering_serial(double **particles, int npts, double dt, int timestep_idx, uint64_t sidm_seed, long long *Nscatter_total_step, double halo_mass_for_sidm, double rc_for_sidm, int *current_scatter_counts);
 
 // Forward declaration for the parallel SIDM scattering function (graph coloring algorithm)
-void perform_sidm_scattering_parallel_graphcolor(double **particles, int npts, double dt, double current_time, gsl_rng **rng_per_thread_list, int num_threads_for_rng, long long *Nscatter_total_step, double halo_mass_for_sidm, double rc_for_sidm, int *current_scatter_counts);
+void perform_sidm_scattering_parallel_graphcolor(double **particles, int npts, double dt, int timestep_idx, uint64_t sidm_seed, long long *Nscatter_total_step, double halo_mass_for_sidm, double rc_for_sidm, int *current_scatter_counts);
 
 // Forward declarations for trajectory buffer management functions
 static void allocate_trajectory_buffers(int num_traj_particles, int nlowest, int buffer_size, int npts);
@@ -186,9 +186,7 @@ static void load_particles_from_restart(const char *filename, int snapshot_index
 
 
 static char g_file_suffix[256] = ""; ///< Global file suffix string.
-static gsl_rng *g_rng = NULL; ///< GSL Random Number Generator state.
-static gsl_rng **g_rng_per_thread = NULL; ///< Array of GSL RNG states, one per OpenMP thread.
-static int g_max_omp_threads_for_rng = 1; ///< Number of threads for which RNGs are allocated.
+static gsl_rng *g_rng = NULL; ///< GSL Random Number Generator state for IC generation.
 
 // =============================================================================
 // PERSISTENT SORT BUFFER CONFIGURATION
@@ -565,7 +563,7 @@ static const char* g_sidm_seed_filename_base = "data/last_sidm_seed";           
 
 // Profile parameter macros used by profile variables
 #define RC 23.0                   ///< Core radius in kpc.
-#define RC_NFW_DEFAULT 23.0       ///< Default NFW profile scale radius (kpc).
+#define RC_NFW_DEFAULT 1.18       ///< Default NFW profile scale radius (kpc).
 #define HALO_MASS_NFW 1.15e9      ///< Default NFW profile halo mass in solar masses (\f$M_{\odot}\f$).
 #define HALO_MASS 1.0e12          ///< Default general halo mass (used for Cored profile by default) in \f$M_{\odot}\f$.
 #define CUTOFF_FACTOR_NFW_DEFAULT 85.0  ///< Default \f$r_{\text{max}}\f$ factor for NFW profile (\f$r_{\text{max}} = \text{factor} \times r_c\f$).
@@ -595,6 +593,12 @@ static double g_nfw_profile_halo_mass = HALO_MASS_NFW; ///< Total halo mass for 
 static double g_nfw_profile_rmax_norm_factor = CUTOFF_FACTOR_NFW_DEFAULT; ///< Cutoff radius factor for the NFW profile. Populated from `g_cutoff_factor_param`.
 static double g_nfw_profile_falloff_factor = FALLOFF_FACTOR_NFW_DEFAULT; ///< Falloff concentration parameter \f$C\f$ for the NFW profile. Populated from `g_falloff_factor_param`.
 
+/**
+ * @brief Pre-calculated gravitational force constant.
+ * @details Combines -G * M_total / npts * unit conversions to avoid repeated
+ *          division in force calculations. Updated once before main time loop.
+ */
+static double g_precalc_force_const = 0.0;
 
 // Generalized Profile Parameters (set by command line flags)
 static double g_scale_radius_param = RC;        ///< Generalized scale radius (kpc), defaults to RC macro.
@@ -687,6 +691,57 @@ int debug_direct_convolution = 0;
 // Mathematical utility macros
 #define sqr(x) ((x) * (x))       ///< Calculates the square of a value: \f$x^2\f$.
 #define cube(x) ((x) * (x) * (x)) ///< Calculates the cube of a value: \f$x^3\f$.
+
+// -----------------------------------------------------------------------------
+// Deterministic Random Number Generation
+// -----------------------------------------------------------------------------
+
+/**
+ * @brief High-performance 64-bit mixing function.
+ * @details Applies three rounds of reversible bit-mixing operations (XOR-shift and
+ *          multiply) to decorrelate input bits. This mixing pattern provides excellent
+ *          avalanche properties: single-bit changes in the input propagate to affect
+ *          approximately half of the output bits, ensuring uniform distribution.
+ *
+ * @param k [in] Input 64-bit integer key.
+ * @return uint64_t The mixed 64-bit hash value.
+ */
+static inline uint64_t mix64(uint64_t k) {
+    k ^= k >> 33;
+    k *= 0xff51afd7ed558ccdULL;
+    k ^= k >> 33;
+    k *= 0xc4ceb9fe1a85ec53ULL;
+    k ^= k >> 33;
+    return k;
+}
+
+/**
+ * @brief Generates a deterministic, thread-safe uniform random number in [0, 1).
+ * @details This function hashes the unique coordinates of a simulation event
+ *          (Seed, Time, ParticleID, CallID) to produce a statistically independent
+ *          random number. The counter-based approach eliminates shared state: each
+ *          thread-particle-timestep combination maps to a unique hash input, ensuring
+ *          reproducibility regardless of thread scheduling or execution order.
+ *
+ *          Algorithm: Combines the four input coordinates through bit-mixing operations,
+ *          applies a 64-bit hash finalizer, and converts the result to a uniform double
+ *          by extracting the high 53 bits and scaling to [0, 1).
+ *
+ * @param seed [in] Simulation seed for reproducibility.
+ * @param step [in] Current timestep index.
+ * @param id   [in] Persistent particle identifier.
+ * @param call [in] RNG call sequence number within timestep.
+ * @return double Uniform random value in [0, 1).
+ */
+static inline double get_deterministic_rand(uint64_t seed, int step, int id, int call) {
+    uint64_t h = seed + mix64((uint64_t)step) + 0x9e3779b97f4a7c15ULL;
+    h ^= mix64((uint64_t)id) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+    h ^= mix64((uint64_t)call) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+    uint64_t z = (h + 0x9e3779b97f4a7c15ULL);
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+    return ((z ^ (z >> 31)) >> 11) * 0x1.0p-53;
+}
 
 // Analysis and visualization parameters
 #define HIST_NBINS 400          ///< Number of bins for 2D phase-space histograms (400x400 resolution).
@@ -1603,16 +1658,17 @@ static int use_identity_gravity = 0;
  */
 static inline double gravitational_force(double r, int current_rank, int npts, double G_value, double halo_mass_value)
 {
+    (void)npts;
+    (void)G_value;
+    (void)halo_mass_value;
     if (use_identity_gravity)
     {
-        // Testing mode: no gravitational force
         return 0.0;
     }
     else
     {
-        // Calculate gravitational force: F = -G * M(r) / r²
-        // where M(r) is proportional to particle rank
-        return -(VEL_CONV_SQ * G_value) * ((double)current_rank / (double)npts) * halo_mass_value / (r * r);
+        double r_sq_inv = 1.0 / (r * r);
+        return g_precalc_force_const * (double)current_rank * r_sq_inv;
     }
 }
 
@@ -1645,15 +1701,17 @@ static inline double effective_angular_force(double r, double ell)
  */
 static inline double gravitational_force_rho_v(double rho, int current_rank, int npts, double G_value, double halo_mass_value)
 {
+    (void)npts;
+    (void)G_value;
+    (void)halo_mass_value;
     if (use_identity_gravity)
     {
-        // Testing mode: no gravitational force
         return 0.0;
     }
     else
     {
-        // Gravitational force in transformed coordinates
-        return -(VEL_CONV_SQ * G_value) * ((double)current_rank / (double)npts) * halo_mass_value / (rho * rho);
+        double rho_sq_inv = 1.0 / (rho * rho);
+        return g_precalc_force_const * (double)current_rank * rho_sq_inv;
     }
 }
 
@@ -1672,6 +1730,29 @@ static inline double effective_angular_force_rho_v(double rho, double ell)
 {
     return (ell * ell) / (rho * rho * rho * rho);
 }
+
+/**
+ * @brief Advances azimuthal angle via 4th-order Simpson's rule using radius history.
+ * @details Integrates \f$d\phi/dt = L/r^2\f$ over one timestep using a three-point
+ *          radius stencil at \f$t-\Delta t\f$, \f$t\f$, and \f$t+\Delta t\f$. For the
+ *          first timestep (\f$j=0\f$), falls back to 2nd-order trapezoidal rule.
+ *          For subsequent steps, uses quadratic interpolation to estimate \f$r(t+\Delta t/2)\f$
+ *          and applies Simpson's rule: \f$\Delta\phi = (\omega_t + 4\omega_{mid} + \omega_{t+\Delta t})\Delta t/6\f$.
+ *          Updates \f$(\cos\phi, \sin\phi)\f$ via rotation matrix for exact norm preservation.
+ *
+ * @param particles [in,out] Particle data array. Reads angular momentum `[2][i]` and
+ *                  updated position `[0][i]`. Updates azimuthal components `[5][i]` and `[6][i]`.
+ * @param i [in] Particle index (0 to npts-1).
+ * @param dt [in] Physical timestep size (Myr).
+ * @param j [in] Current timestep index (0 triggers trapezoidal bootstrap).
+ * @param rlast [in] Radius at previous timestep \f$r(t-\Delta t)\f$ (kpc).
+ * @param rcurrent [in] Radius at current timestep \f$r(t)\f$ (kpc).
+ *
+ * @note Skips update if any radius \f$\leq 10^{-15}\f$ or \f$|L| \leq 10^{-15}\f$.
+ *       Renormalizes \f$(\cos\phi, \sin\phi)\f$ if \f$|\cos^2\phi + \sin^2\phi - 1| > 10^{-12}\f$.
+ *
+ * @see effective_angular_force
+ */
 
 // =============================================================================
 // Energy Debugging and Validation Subsystem
@@ -2237,14 +2318,14 @@ static void printUsage(const char *prog)
             "                                          5   Parallel Radix Sort\n"
             "                                          6   Adaptive sort (benchmarks & switches algorithms)\n"
             "\n"
-            "  --halo-mass <float>           [Default 1.15e9] Total halo mass in M☉ for the selected profile.\n"
+            "  --halo-mass <float>           [Default: NFW=1.15e9, Hernquist/Cored=1.0e12] Total halo mass in M☉.\n"
             "  --profile <type>              [Default nfw] Profile type for ICs: 'nfw', 'cored', or 'hernquist'.\n"
             "  --aniso-beta <float>          [Default 0.0] Constant anisotropy parameter β for Hernquist profile (-1 ≤ β ≤ 0.5).\n"
             "  --aniso-factor <float>        [Default Off] Osipkov-Merritt anisotropy radius in units of scale radius.\n"
             "                                     Enables OM model with β(r) = r²/(r² + r_a²). Compatible with all profiles.\n"
             "  --aniso-betascale <float>     [Default Off] Alternative to --aniso-factor: specify β at the scale radius.\n"
             "                                     Sets r_a/r_s = √(1/β_s - 1). Range: (0, 1). Cannot use with --aniso-factor.\n"
-            "  --scale-radius <float>        [Default 23] Scale radius in kpc for the selected profile.\n"
+            "  --scale-radius <float>        [Default: NFW=1.18, Hernquist/Cored=23] Scale radius in kpc.\n"
             "  --cutoff-factor <float>       [Default 85.0] Absolute r_max in units of scale radius.\n"
             "  --falloff-factor <float>      [Default 19.0] NFW concentration parameter transition factor.\n"
             "  --ftidal <float>              [Default 0.0] Set tidal fraction outer stripping value (0.0 to 1.0)\n"
@@ -5323,14 +5404,16 @@ static int check_strict_monotonicity(const double *arr, int n, const char *name)
  * @param bootstrap_phase_active [in] Flag (0 or 1) indicating if a bootstrap phase (e.g., for Adams-Bashforth)
  *                               is active. If 1, SIDM scattering is skipped for this step.
  * @note This function modifies the `particles` array in-place.
- * @note It uses global variables: `g_enable_sidm_scattering`, `g_sidm_execution_mode`, 
- *       `g_rng_per_thread`, `g_max_omp_threads_for_rng`, `g_rng`, `g_total_sidm_scatters`,
- *       `g_active_halo_mass`, `g_doDebug`, and `g_particle_scatter_state`.
+ * @note It uses global variables: `g_enable_sidm_scattering`, `g_sidm_execution_mode`,
+ *       `g_sidm_seed`, `g_total_sidm_scatters`, `g_active_halo_mass`, `g_doDebug`,
+ *       and `g_particle_scatter_state`.
  */
 static void handle_sidm_step(double **particles, int npts, double dt, double current_sim_time,
                              double active_profile_rc, int current_method_display_num,
-                             int bootstrap_phase_active, int *current_scatter_counts) 
+                             int bootstrap_phase_active, int *current_scatter_counts,
+                             int timestep_idx)
 {
+    (void)current_sim_time;
     if (!g_enable_sidm_scattering || bootstrap_phase_active) {
         return; // Skip SIDM if disabled or in a bootstrap phase that should skip SIDM
     }
@@ -5339,36 +5422,19 @@ static void handle_sidm_step(double **particles, int npts, double dt, double cur
 
     if (g_sidm_execution_mode == 1) { // Parallel
         #ifdef _OPENMP
-            if (g_rng_per_thread != NULL && g_max_omp_threads_for_rng > 0) {
-                // Graph coloring algorithm: processes particles in 11 color groups sequentially
-                perform_sidm_scattering_parallel_graphcolor(particles, npts, dt, current_sim_time,
-                                               g_rng_per_thread, g_max_omp_threads_for_rng,
-                                               &Nscatters_in_this_step, g_active_halo_mass, active_profile_rc, current_scatter_counts);
-            } else {
-                log_message("ERROR", "SIDM Parallel mode selected but per-thread RNGs not available. Skipping SIDM for step.");
-                Nscatters_in_this_step = 0;
-            }
+            // Deterministic parallel SIDM (no RNG state needed)
+            perform_sidm_scattering_parallel_graphcolor(particles, npts, dt, timestep_idx,
+                                           g_sidm_seed, &Nscatters_in_this_step,
+                                           g_active_halo_mass, active_profile_rc, current_scatter_counts);
         #else
             // Serial fallback if OpenMP not compiled but parallel mode selected
             log_message("WARNING", "SIDM Parallel mode selected but OpenMP not enabled. Running SIDM serially.");
-            gsl_rng *rng_for_serial_fallback = (g_rng_per_thread != NULL && g_rng_per_thread[0] != NULL) ? g_rng_per_thread[0] : g_rng;
-            if (rng_for_serial_fallback != NULL) {
-                perform_sidm_scattering_serial(particles, npts, dt, current_sim_time, rng_for_serial_fallback,
-                                             &Nscatters_in_this_step, g_active_halo_mass, active_profile_rc, current_scatter_counts);
-            } else {
-                log_message("ERROR", "SIDM Serial fallback: No suitable RNG available. Skipping SIDM for step.");
-                Nscatters_in_this_step = 0;
-            }
+            perform_sidm_scattering_serial(particles, npts, dt, timestep_idx, g_sidm_seed,
+                                         &Nscatters_in_this_step, g_active_halo_mass, active_profile_rc, current_scatter_counts);
         #endif
     } else { // Serial SIDM execution
-        gsl_rng *rng_for_serial = (g_rng_per_thread != NULL && g_rng_per_thread[0] != NULL) ? g_rng_per_thread[0] : g_rng;
-        if (rng_for_serial != NULL) {
-            perform_sidm_scattering_serial(particles, npts, dt, current_sim_time, rng_for_serial,
-                                         &Nscatters_in_this_step, g_active_halo_mass, active_profile_rc, current_scatter_counts);
-        } else {
-            log_message("ERROR", "SIDM Serial mode: No suitable RNG available. Skipping SIDM for step.");
-            Nscatters_in_this_step = 0;
-        }
+        perform_sidm_scattering_serial(particles, npts, dt, timestep_idx, g_sidm_seed,
+                                     &Nscatters_in_this_step, g_active_halo_mass, active_profile_rc, current_scatter_counts);
     }
     
     g_total_sidm_scatters += Nscatters_in_this_step;
@@ -6278,8 +6344,8 @@ void generate_ics_hernquist_anisotropic(double **particles, int npts_initial, gs
     // Use linear interpolation to avoid negative oscillations
     gsl_spline *spline_Pmax = gsl_spline_alloc(gsl_interp_linear, num_envelope_points);
     gsl_spline_init(spline_Pmax, r_envelope, Pmax_envelope, num_envelope_points);
-    
-    // Debug: Check particle radius distribution
+
+    // Validate particle radius distribution after sampling
     double r_min_particle = 1e100;
     double r_max_particle = 0.0;
     
@@ -6364,12 +6430,16 @@ void generate_ics_hernquist_anisotropic(double **particles, int npts_initial, gs
         // data format with the isotropic IC generators. The downstream processing
         // block will correctly calculate v_r = v_mag * mu.
         particles[1][i] = v_accepted; // Store velocity MAGNITUDE v
-        particles[2][i] = r * v_accepted * sqrt(fmax(0.0, 1.0 - mu * mu)); // Angular momentum L
+
+        // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+        double L_sign_hern_beta = (gsl_rng_uniform(rng) < 0.5) ? -1.0 : 1.0;
+        particles[2][i] = L_sign_hern_beta * r * v_accepted * sqrt(fmax(0.0, 1.0 - mu * mu)); // Angular momentum L with random sign
+
         particles[3][i] = (double)i; // Original ID
         particles[4][i] = mu; // Store mu
     }
-    
-    // Debug: Check for particles with extreme velocities or positions
+
+    // Validate velocity and position bounds after sampling
     double v_max = 0.0;
     double r_min_check = 1e100;
     double r_max_check = 0.0;
@@ -6645,7 +6715,7 @@ printf("  \n");
         printf("\n\n");
     }
 
-    // Define single-thread variable for non-OpenMP compilation mode
+    // Fallback thread count for serial execution
     int max_threads __attribute__((unused)) = 1;
 #endif
 
@@ -7629,23 +7699,12 @@ printf("  \n");
             }
             
             if (src_N == npts) {
-                // Calculate snapshots in source file
-                long long source_records = source_size / 16;
-                long long source_snapshots = source_records / npts;
-                
-                if (source_records % npts == 0) {
-                    // Valid file structure - set restart parameters NOW
-                    restart_completed_snapshots = (int)source_snapshots;
-                    restart_initial_nwrite = (int)source_snapshots - 1;
-                    
-                    // CRITICAL: Set restart_source_file to SOURCE file for IC loading
-                    // Points to target filename for continued simulation
+                if ((source_size / 16) % npts == 0) {
                     strncpy(restart_source_file, g_extend_file_source, sizeof(restart_source_file) - 1);
                     restart_source_file[sizeof(restart_source_file) - 1] = '\0';
-                    
-                    // Mark restart mode active so IC generation loads from file
-                    g_restart_mode_active = 1;
-                    
+
+                    g_doSimRestart = 1;
+                    g_doSimExtend = 0;
                 }
             }
         }
@@ -8065,39 +8124,11 @@ printf("  \n");
     if (!doReadInit && !g_restart_mode_active) {
         log_message("INFO", "Initializing persistent cos/sin(phi) angles for %d particles.", npts_initial);
         for (i = 0; i < npts_initial; i++) {
-            double phi_val = 2.0 * PI * gsl_rng_uniform(g_rng);  // Random phi in [0, 2π]
-            particles[5][i] = cos(phi_val);  // Store cos(phi)
-            particles[6][i] = sin(phi_val);  // Store sin(phi)
+            double phi_val = 2.0 * PI * gsl_rng_uniform(g_rng);
+            particles[5][i] = cos(phi_val);
+            particles[6][i] = sin(phi_val);
         }
     }
-
-    // Initialize per-thread GSL RNGs if OpenMP is enabled
-    #ifdef _OPENMP
-        g_max_omp_threads_for_rng = omp_get_max_threads();
-        if (g_max_omp_threads_for_rng <= 0) g_max_omp_threads_for_rng = 1; // Safety
-    #else
-        g_max_omp_threads_for_rng = 1;
-    #endif
-
-    g_rng_per_thread = (gsl_rng **)malloc(g_max_omp_threads_for_rng * sizeof(gsl_rng *));
-    if (g_rng_per_thread == NULL) {
-        fprintf(stderr, "Error: Failed to allocate memory for per-thread RNG array.\n");
-        CLEAN_EXIT(1);
-    }
-
-    const gsl_rng_type *T_rng_thread = gsl_rng_default;
-    
-    for (int i_rng = 0; i_rng < g_max_omp_threads_for_rng; ++i_rng) {
-        g_rng_per_thread[i_rng] = gsl_rng_alloc(T_rng_thread);
-        if (g_rng_per_thread[i_rng] == NULL) {
-            fprintf(stderr, "Error: Failed to allocate GSL RNG for thread %d.\n", i_rng);
-            for (int k_rng = 0; k_rng < i_rng; ++k_rng) gsl_rng_free(g_rng_per_thread[k_rng]);
-            free(g_rng_per_thread);
-            CLEAN_EXIT(1);
-        }
-        gsl_rng_set(g_rng_per_thread[i_rng], g_sidm_seed + (unsigned long int)i_rng);
-    }
-    log_message("INFO", "Initialized %d per-thread GSL RNGs (for SIDM) using base SIDM seed %lu", g_max_omp_threads_for_rng, g_sidm_seed);
 
     if (g_use_nfw_profile) {
         log_message("INFO", "Starting IC generation using NFW-like profile pathway.");
@@ -8393,7 +8424,7 @@ printf("  \n");
                         goto cleanup_diag_iteration;
                     }
                     
-                    // Debug: print first few E values to check monotonicity
+                    // Print energy values for monotonicity verification
                     if (g_doDebug) {
                         log_message("DEBUG", "First few Evalues_diag_arr values:");
                         for (int k = 0; k < 5 && k <= num_points_diag; k++) {
@@ -9098,34 +9129,11 @@ cleanup_diag_iteration:
                 log_message("INFO", "NFW IC Gen: Initial particle count before stripping: %d", npts_initial);
             }
             log_message("INFO", "NFW IC Gen: Generating %d initial particle positions and velocities...", npts_initial);
-            
-            // Print overall Psimin, Psimax for NFW path once
-            if (npts_initial > 0) { // Avoid printing if no particles
-                if (Psimax <= Psimin) {
-                }
-            }
-            
+
             /**
-             * @brief Allocate memory for the particle data array.
-             * @details 2D array particles[5][npts_initial] where:
-             *          [0] = radius, [1] = velocity, [2] = angular momentum,
-             *          [3] = particle ID, [4] = orientation (mu)
-             */
-            particles = (double **)malloc(7 * sizeof(double *));  // Rows 5,6 for cos(phi), sin(phi)
-            if (particles == NULL) {
-                fprintf(stderr, "NFW_PATH: Memory allocation failed for particle array\n");
-                CLEAN_EXIT(1);
-            }
-            for (i = 0; i < 7; i++) {  // 7 rows for extended particle state
-                particles[i] = (double *)malloc(npts_initial * sizeof(double));
-                if (particles[i] == NULL) {
-                    fprintf(stderr, "NFW_PATH: Memory allocation failed for particles[%d]\n", i);
-                    CLEAN_EXIT(1);
-                }
-            }
-            
-            /**
-             * @brief Calculate maximum velocity squared at each radius for rejection sampling.
+             * @brief Generate NFW particle positions and velocities.
+             * @details Uses rejection sampling with NFW density profile and f(E) distribution.
+             *          Particles array already allocated in main scope; reuses common allocation.
              */
             double *maxv2f_nfw = (double *)malloc(num_maxv2f * sizeof(double));
             double *radius_maxv2f_nfw = (double *)malloc(num_maxv2f * sizeof(double));
@@ -9369,16 +9377,24 @@ cleanup_diag_iteration:
                     double v_r = mu_w * w;
                     double v_t = sqrt(fmax(0.0, 1.0 - mu_w * mu_w)) * w / sqrt(alpha_r);
                     double v_mag = sqrt(v_r * v_r + v_t * v_t);
-                    
+
                     particles[1][k_nfw] = v_mag; // Store velocity magnitude |v|
-                    particles[2][k_nfw] = particles[0][k_nfw] * v_t; // Store angular momentum L
+
+                    // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+                    double L_sign_nfw = (gsl_rng_uniform(g_rng) < 0.5) ? -1.0 : 1.0;
+                    particles[2][k_nfw] = L_sign_nfw * particles[0][k_nfw] * v_t; // Store angular momentum L with random sign
+
                     particles[4][k_nfw] = (v_mag > 1e-9) ? (v_r / v_mag) : 0.0; // Store physical mu
                 } else {
                     // --- Isotropic Sampling (original logic) ---
                     double v = sampled_scalar_speed;
                     nfw_mu = 2.0 * gsl_rng_uniform(g_rng) - 1.0;
                     particles[1][k_nfw] = v; // Store velocity magnitude
-                    particles[2][k_nfw] = particles[0][k_nfw] * v * sqrt(fmax(0.0, 1.0 - nfw_mu * nfw_mu));
+
+                    // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+                    double L_sign_nfw_iso = (gsl_rng_uniform(g_rng) < 0.5) ? -1.0 : 1.0;
+                    particles[2][k_nfw] = L_sign_nfw_iso * particles[0][k_nfw] * v * sqrt(fmax(0.0, 1.0 - nfw_mu * nfw_mu));
+
                     particles[4][k_nfw] = nfw_mu; // Store mu
                 }
     
@@ -9901,16 +9917,24 @@ cleanup_diag_iteration:
                 double v_r = mu_w * w;
                 double v_t = sqrt(fmax(0.0, 1.0 - mu_w * mu_w)) * w / sqrt(alpha_r);
                 double v_mag = sqrt(v_r * v_r + v_t * v_t);
-                
+
                 particles[1][k] = v_mag;  // Store velocity magnitude
-                particles[2][k] = particles[0][k] * v_t;  // Store angular momentum L
+
+                // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+                double L_sign_hern = (gsl_rng_uniform(g_rng) < 0.5) ? -1.0 : 1.0;
+                particles[2][k] = L_sign_hern * particles[0][k] * v_t;  // Store angular momentum L with random sign
+
                 particles[4][k] = (v_mag > 1e-9) ? (v_r / v_mag) : 0.0;  // Store physical mu
             } else {
                 // Isotropic sampling
                 double v = sampled_scalar_speed;
                 double mu = 2.0 * gsl_rng_uniform(g_rng) - 1.0;
                 particles[1][k] = v;  // Store velocity magnitude
-                particles[2][k] = particles[0][k] * v * sqrt(fmax(0.0, 1.0 - mu * mu));  // L
+
+                // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+                double L_sign_hern_iso = (gsl_rng_uniform(g_rng) < 0.5) ? -1.0 : 1.0;
+                particles[2][k] = L_sign_hern_iso * particles[0][k] * v * sqrt(fmax(0.0, 1.0 - mu * mu));  // L with random sign
+
                 particles[4][k] = mu;  // Store mu
             }
             
@@ -10900,16 +10924,24 @@ cleanup_diag_iteration:
                 double v_r = mu_w * w;
                 double v_t = sqrt(1.0 - mu_w * mu_w) * w / sqrt(alpha_r);
                 double v_mag = sqrt(v_r * v_r + v_t * v_t);
-                
+
                 particles[1][i] = v_mag; // Store velocity magnitude |v|
-                particles[2][i] = particles[0][i] * v_t; // Store angular momentum L
+
+                // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+                double L_sign_cored = (gsl_rng_uniform(g_rng) < 0.5) ? -1.0 : 1.0;
+                particles[2][i] = L_sign_cored * particles[0][i] * v_t; // Store angular momentum L with random sign
+
                 particles[4][i] = v_r / v_mag; // Store physical mu = v_r/|v|
             } else {
                 // --- Isotropic Sampling (original logic) ---
                 double v = sampled_scalar_speed;
                 mu = 2.0 * gsl_rng_uniform(g_rng) - 1.0;
                 particles[1][i] = v; // Store velocity magnitude
-                particles[2][i] = particles[0][i] * v * sqrt(1.0 - mu * mu); // L
+
+                // Randomize angular momentum sign (50% clockwise, 50% counterclockwise)
+                double L_sign_cored_iso = (gsl_rng_uniform(g_rng) < 0.5) ? -1.0 : 1.0;
+                particles[2][i] = L_sign_cored_iso * particles[0][i] * v * sqrt(1.0 - mu * mu); // L with random sign
+
                 particles[4][i] = mu; // Store mu
             }
 
@@ -11250,10 +11282,10 @@ cleanup_diag_iteration:
                 // Store the sign of the difference for accurate L reconstruction.
                 LAI[i].sign = (L_initial - Lcompare >= 0.0) ? 1 : -1;
             }
-            else // Mode 0: Lowest absolute L (using signed L values)
+            else // Mode 0: Lowest absolute L
             {
-                LAI[i].L = g_L_init_vals[i]; // Store initial L value (signed)
-                LAI[i].sign = 0;       // Sign field not used for sorting in this mode
+                LAI[i].L = fabs(g_L_init_vals[i]); // Store |L| for sorting by magnitude
+                LAI[i].sign = (g_L_init_vals[i] >= 0.0) ? 1 : -1;  // Preserve sign for L reconstruction
             }
             LAI[i].idx = i; // Store the final_rank_id associated with this L value
         }
@@ -11261,13 +11293,17 @@ cleanup_diag_iteration:
         /** @brief Sort LAI array by \f$L\f$ member in ascending order (lowest \f$L\f$ or smallest \f$L\f$ deviation from \f$L_{compare}\f$). */
         qsort(LAI, npts, sizeof(LAndIndex), cmp_LAI);
 
-        /** @brief If using Mode 1 (closest to \f$L_{compare}\f$), reconstruct actual \f$L\f$ values in LAI[].\f$L\f$.
-         *         Note: This is primarily for the debug log output below; the primary goal is selecting indices. */
+        /** @brief Reconstruct actual signed \f$L\f$ values in LAI[].\f$L\f$ for debug logging.
+         *         Note: This is primarily for debug log output; particle selection uses indices. */
         if (use_closest_to_Lcompare) {
+            // Mode 1: Reconstruct from squared difference
             for (int i = 0; i < npts; i++) {
-                // Reconstruct L from squared difference: L = Lcompare ± sqrt(diff²)
-                // Sign field determines direction of offset from Lcompare
                 LAI[i].L = Lcompare + LAI[i].sign * sqrt(LAI[i].L);
+            }
+        } else {
+            // Mode 0: Reconstruct signed L from magnitude and sign
+            for (int i = 0; i < npts; i++) {
+                LAI[i].L = LAI[i].sign * LAI[i].L;
             }
         }
 
@@ -11297,8 +11333,7 @@ cleanup_diag_iteration:
             printf("Saved chosen particles to %s\n", chosen_filename);
         }
 
-        // Buffers for lowest-L particles (g_lowestL_r_buf, etc.) allocated by
-        // allocate_trajectory_buffers(); used to store trajectory data during simulation.
+        // Buffers for lowest-L particles (g_lowestL_r_buf, etc.) allocated by allocate_trajectory_buffers
     } // End Low-L selection block
 
     /**
@@ -11355,8 +11390,6 @@ cleanup_diag_iteration:
         get_suffixed_filename("data/all_particle_data.dat", 1, apd_filename, sizeof(apd_filename));
     }
 
-    // Restart variables already declared earlier at line 5704
-    
     /**
      * @brief SIMULATION RESTART DETECTION block (`--sim-restart` mode).
      * @details When `--sim-restart` is enabled, check if the simulation is complete.
@@ -12513,33 +12546,13 @@ cleanup_diag_iteration:
             }
         }
 
-        // Now update apd_filename to use the target for the rest of the simulation
+        // Update global filename to point to the newly created target
         strncpy(apd_filename, target_filename, sizeof(apd_filename) - 1);
         apd_filename[sizeof(apd_filename) - 1] = '\0';
-        
-        // Switch to sim-restart mode to continue from where source left off
+
+        // Transition to restart logic to handle state loading and consistency checks
         g_doSimRestart = 1;
-        // Keep g_doSimExtend true to preserve extend mode origin flag
-        
-        // Set up restart parameters
-        restart_completed_snapshots = (int)source_snapshots;
-        restart_initial_time = (restart_completed_snapshots - 1) * dtwrite * dt;
-        restart_initial_nwrite = restart_completed_snapshots - 1;  // Use last snapshot INDEX, not count
-
-        // Note: g_restart_initial_timestep set from src_Ntimes during filename parsing
-        // Represents the last completed timestep from the source run
-
-        // Set restart_source_file to the TARGET (which has the copied data)
-        strncpy(restart_source_file, target_filename, sizeof(restart_source_file) - 1);
-        
-        // Adjust Ntimes for remaining work
-        original_Ntimes = Ntimes;
-        // Use g_restart_initial_timestep which has the actual completed timesteps
-        int completed_timesteps_j = g_restart_initial_timestep;
-        Ntimes = Ntimes - completed_timesteps_j + 1;  // +1 accounts for skipped j=0
-
-        // Mark restart mode active for IC loading
-        g_restart_mode_active = 1;
+        g_restart_mode_active = 0;
     }
 
     // Load existing energy diagnostic data if in restart mode (NOT extend mode - that copies the file)
@@ -12953,6 +12966,9 @@ cleanup_diag_iteration:
      *          where only post-processing of existing `all_particle_data.dat` is required).
      */
 
+    // Initialize pre-calculated force constant to avoid repeated divisions
+    g_precalc_force_const = -(VEL_CONV_SQ * G_CONST) * (g_active_halo_mass / (double)npts);
+
     if (!skip_simulation)
     {
         for (int j = 0; j < Ntimes; j++) // Main time loop
@@ -12968,7 +12984,9 @@ cleanup_diag_iteration:
                 continue;
             }
 
-            // Method_select = 1; Flag now.
+            // Calculate absolute timestep for deterministic RNG (accounts for restart offset)
+            int rng_timestep = (g_restart_mode_active ? g_restart_initial_timestep : 0) + j;
+
             if (method_select == 0)
             {
 /****************************/
@@ -13007,7 +13025,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering: profile-aware scale radius selection and execution mode handling
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 // Record trajectory data at every timestep into buffer
 #pragma omp single
@@ -13083,7 +13101,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering after leapfrog drift completion
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 // Record trajectory data at every timestep into buffer
 #pragma omp single
@@ -13173,7 +13191,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering after velocity half-step completion
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 // Record trajectory data at every timestep into buffer
 #pragma omp single
@@ -13222,7 +13240,6 @@ cleanup_diag_iteration:
 
                 double velocity_tol = 1.0e-5;
                 double radius_tol = 1.0e-5;
-                // Int max_subdiv = 8383608;
                 int max_subdiv = 1;
                 int out_type = 0;
 
@@ -13276,7 +13293,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering after adaptive leapfrog completion
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 /**
                  * @brief Timestep wrap-up phase - update time and record particle states.
@@ -13410,7 +13427,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering after hybrid integrator completion (Levi-Civita/adaptive leapfrog)
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 // Record trajectory data at every timestep into buffer
 #pragma omp single
@@ -13473,9 +13490,9 @@ cleanup_diag_iteration:
                     inverse_map[orig_id] = idx;
                 }
 
-                // SIDM scattering before adaptive orbital integration with Levi-Civita regularization
+                // SIDM scattering before gravity (uses radius-sorted neighbor list)
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
 #pragma omp parallel for default(shared) schedule(static)
                 for (int i = 0; i < npts; i++)
@@ -13686,7 +13703,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering after 4th-order Yoshida symplectic integration
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 // Record trajectory data at every timestep into buffer
 #pragma omp single
@@ -13850,7 +13867,7 @@ cleanup_diag_iteration:
 
                 // SIDM scattering after RK4 state update completion
                 double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts);
+                handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, 0, g_current_timestep_scatter_counts, rng_timestep);
 
                 // Record trajectory data at every timestep into buffer
 #pragma omp single
@@ -14078,7 +14095,7 @@ cleanup_diag_iteration:
 
                     // SIDM scattering after Adams-Bashforth update (skip during bootstrap)
                     double current_active_rc_for_sidm = g_use_hernquist_aniso_profile ? g_scale_radius_param : (g_use_nfw_profile ? g_nfw_profile_rc : g_cored_profile_rc);
-                    handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, !ab3_bootstrap_done, g_current_timestep_scatter_counts);
+                    handle_sidm_step(particles, npts, dt, time, current_active_rc_for_sidm, display_method, !ab3_bootstrap_done, g_current_timestep_scatter_counts, rng_timestep);
 
                     // Re-sort and compute new derivatives to shift AB3 history
 #pragma omp single
@@ -14086,8 +14103,6 @@ cleanup_diag_iteration:
                         sort_particles(particles, npts);
                     }
 #pragma omp barrier
-                    // #pragma omp single.
-                    // {
 
 #pragma omp parallel for default(shared) schedule(static)
                     for (int idx = 0; idx < npts; idx++)
@@ -14447,7 +14462,7 @@ cleanup_diag_iteration:
                     // Flush trajectory buffers if a full block has been written. This call is
                     // synchronized with the main particle data block write to ensure that all
                     // output files correspond to the same set of timesteps.
-                    // Use nwrite_total (already incremented at line 13449) for accurate count
+                    // Use nwrite_total for accurate count (already incremented earlier)
                     int writes_this_run_for_check = nwrite_total;
                     int should_flush_traj_block = (writes_this_run_for_check > 0 && (writes_this_run_for_check % snapshot_block_size) == 0);
 
@@ -16165,7 +16180,7 @@ cleanup_diag_iteration:
                    density_grid[0] = density_grid[1]; // Simple extrapolation
                    density_grid[grid_size - 1] = density_grid[grid_size - 2]; // Simple extrapolation
                 } else if (grid_size == 1) {
-                   density_grid[0] = 0.0; // Or some default
+                   density_grid[0] = 0.0; // Zero density for degenerate single-point grid
                 }
 
                 log_message("INFO", "Thread %d: Allocating memory for density smoothing arrays for snapshot %d",
@@ -16727,8 +16742,6 @@ cleanup_diag_iteration:
         g_rng = NULL;
     }
 
-    // End method_select == 3 block.
-
     for (i = 0; i < 7; i++)  // 7 rows for extended particle state
     {
         free(particles[i]);
@@ -16775,17 +16788,6 @@ cleanup_diag_iteration:
     }
 #endif
 
-    // Free per-thread GSL RNG resources
-    if (g_rng_per_thread != NULL) {
-        for (int i_rng = 0; i_rng < g_max_omp_threads_for_rng; ++i_rng) {
-            if (g_rng_per_thread[i_rng] != NULL) {
-                gsl_rng_free(g_rng_per_thread[i_rng]);
-            }
-        }
-        free(g_rng_per_thread);
-        g_rng_per_thread = NULL;
-        log_message("INFO", "Freed per-thread GSL RNGs.");
-    }
 
     // Cleanup for the conditionally declared persistent sort buffer.
     if (g_sort_columns_buffer != NULL) {
@@ -17602,7 +17604,6 @@ void insertion_parallel_sort(double **columns, int n)
     if (active_num_sort_sections < 1) active_num_sort_sections = 1;
     if (n > 0 && active_num_sort_sections > n) active_num_sort_sections = n; 
     // Optional: Add a hard cap for maximum sections if desired, e.g.:
-    // if (active_num_sort_sections > 96) active_num_sort_sections = 96;
 
     // Fallback to serial sort for small N or if chunks would be too small
     int estimated_avg_chunk_size = (n > 0 && active_num_sort_sections > 0) ? (n / active_num_sort_sections) : n;
@@ -17789,7 +17790,6 @@ static void parallel_radix_sort(double **columns, int n)
 
     #ifdef _OPENMP
     int num_threads = use_parallel ? omp_get_max_threads() : 1;
-    if (n < 1000000 && num_threads > 4) num_threads = 4;  // Limit threads for medium arrays
     #else
     int num_threads = 1;
     use_parallel = 0;
@@ -17927,7 +17927,6 @@ void quadsort_parallel_sort(double **columns, int n)
     if (active_num_sort_sections < 1) active_num_sort_sections = 1;
     if (n > 0 && active_num_sort_sections > n) active_num_sort_sections = n; 
     // Optional: Add a hard cap for maximum sections if desired, e.g.:
-    // if (active_num_sort_sections > 96) active_num_sort_sections = 96;
 
     // Fallback to serial sort for small N or if chunks would be too small
     int estimated_avg_chunk_size = (n > 0 && active_num_sort_sections > 0) ? (n / active_num_sort_sections) : n;
@@ -18424,9 +18423,7 @@ void sort_by_rad(struct PartData *array, int npts)
     }
     if (npts <= 0)
     {
-        // Sorting an empty or negatively sized array is meaningless or an error.
-        // fprintf(stderr, "Warning: sort_by_rad called with npts <= 0: %d\n", npts);
-        return; // Nothing to sort
+        return;
     }
 
     qsort(array, (size_t)npts, sizeof(struct PartData), compare_partdata_by_rad);
@@ -18643,6 +18640,118 @@ double sigmatotal(double vrel, int npts, double halo_mass_for_calc, double rc_fo
   return 2.089e-10 * kappa * particle_mass_Msun; // Cross-section (kpc²)
 }
 
+static inline void perform_scatter_update(
+    double **particles,
+    int i,
+    int j,
+    uint64_t seed,
+    int step,
+    int pid
+) {
+    // Get current velocities
+    double cos_phi_i = particles[5][i];
+    double sin_phi_i = particles[6][i];
+    double Viperp = particles[2][i] / particles[0][i];
+    threevector Vi = make_threevector(Viperp * cos_phi_i, Viperp * sin_phi_i, particles[1][i]);
+
+    double cos_phi_j = particles[5][j];
+    double sin_phi_j = particles[6][j];
+    double Vjperp = particles[2][j] / particles[0][j];
+    threevector Vj = make_threevector(Vjperp * cos_phi_j, Vjperp * sin_phi_j, particles[1][j]);
+
+    // Calculate relative velocity
+    threevector Vrel = make_threevector(Vi.x - Vj.x, Vi.y - Vj.y, Vi.z - Vj.z);
+    double vrel = sqrt(dotproduct(Vrel, Vrel));
+
+    if (vrel < 1e-15) return;  // No scattering for zero relative velocity
+
+    // Generate scattering angles using deterministic hash
+    double u1 = get_deterministic_rand(seed, step, pid, 2);
+    double u2 = get_deterministic_rand(seed, step, pid, 3);
+
+    double costheta = 2.0 * u1 - 1.0;
+    double sintheta = sqrt(fmax(0.0, 1.0 - costheta * costheta));
+    double phif = 2.0 * PI * u2;
+    double cf = cos(phif);
+    double sf = sin(phif);
+
+    // Normalize relative velocity to unit vector
+    double inv_vrel = 1.0 / vrel;
+    double nx = Vrel.x * inv_vrel;
+    double ny = Vrel.y * inv_vrel;
+    double nz = Vrel.z * inv_vrel;
+
+    // Construct orthonormal basis perpendicular to relative velocity using algebraic method
+    double sign = copysign(1.0, nz);
+    double a = -1.0 / (sign + nz);
+    double b = nx * ny * a;
+
+    double n1x = 1.0 + sign * nx * nx * a;
+    double n1y = sign * b;
+    double n1z = -sign * nx;
+
+    double n2x = b;
+    double n2y = sign + ny * ny * a;
+    double n2z = -ny;
+
+    // Apply azimuthal rotation to basis vectors
+    double rot_x = n1x * cf + n2x * sf;
+    double rot_y = n1y * cf + n2y * sf;
+    double rot_z = n1z * cf + n2z * sf;
+
+    // Construct final relative velocity change vector
+    double hvr = vrel * 0.5;
+    threevector Vrel_f_half = make_threevector(
+        hvr * (costheta * nx + sintheta * rot_x),
+        hvr * (costheta * ny + sintheta * rot_y),
+        hvr * (costheta * nz + sintheta * rot_z)
+    );
+
+    // Calculate center of mass velocity
+    threevector Vcm = make_threevector((Vi.x + Vj.x)/2.0, (Vi.y + Vj.y)/2.0, (Vi.z + Vj.z)/2.0);
+
+    // Calculate final velocities
+    threevector Vi_final = make_threevector(
+        Vcm.x + Vrel_f_half.x,
+        Vcm.y + Vrel_f_half.y,
+        Vcm.z + Vrel_f_half.z
+    );
+    threevector Vj_final = make_threevector(
+        Vcm.x - Vrel_f_half.x,
+        Vcm.y - Vrel_f_half.y,
+        Vcm.z - Vrel_f_half.z
+    );
+
+    // Update particle i
+    particles[1][i] = Vi_final.z;  // Vz
+    double Viperp_new = sqrt(Vi_final.x * Vi_final.x + Vi_final.y * Vi_final.y);
+    particles[2][i] = particles[0][i] * Viperp_new;  // r*Vperp
+    if (Viperp_new > 1e-15) {
+        particles[5][i] = Vi_final.x / Viperp_new;  // cos(phi)
+        particles[6][i] = Vi_final.y / Viperp_new;  // sin(phi)
+    } else {
+        particles[5][i] = 1.0;
+        particles[6][i] = 0.0;
+    }
+
+    // Update particle j
+    particles[1][j] = Vj_final.z;  // Vz
+    double Vjperp_new = sqrt(Vj_final.x * Vj_final.x + Vj_final.y * Vj_final.y);
+    particles[2][j] = particles[0][j] * Vjperp_new;  // r*Vperp
+    if (Vjperp_new > 1e-15) {
+        particles[5][j] = Vj_final.x / Vjperp_new;  // cos(phi)
+        particles[6][j] = Vj_final.y / Vjperp_new;  // sin(phi)
+    } else {
+        particles[5][j] = 1.0;
+        particles[6][j] = 0.0;
+    }
+
+    // Flag scattered particles for Adams-Bashforth integrator state reset
+    if (g_particle_scatter_state) {
+        g_particle_scatter_state[(int)particles[3][i]] = 1;
+        g_particle_scatter_state[(int)particles[3][j]] = 1;
+    }
+}
 /**
  * @brief Executes self-interacting dark matter (SIDM) scattering for one simulation timestep (Serial version).
  * @details Implements a serial SIDM scattering algorithm with persistent azimuthal angle tracking.
@@ -18689,17 +18798,19 @@ double sigmatotal(double vrel, int npts, double halo_mass_for_calc, double rc_fo
  * @param current_scatter_counts [in,out] Per-particle scatter count array for tracking (can be NULL).
  */
 
-void perform_sidm_scattering_serial(double **particles, int npts, double dt, double current_time, gsl_rng *rng, long long *Nscatter_total_step, double halo_mass_for_sidm, double rc_for_sidm, int *current_scatter_counts) {
-    (void)current_time; // Unused parameter
-    (void)halo_mass_for_sidm; // Unused parameter
-    (void)rc_for_sidm; // Unused parameter
+void perform_sidm_scattering_serial(double **particles, int npts, double dt, int timestep_idx, uint64_t sidm_seed, long long *Nscatter_total_step, double halo_mass_for_sidm, double rc_for_sidm, int *current_scatter_counts) {
+    (void)rc_for_sidm;
     long long Nscatters_this_call = 0;
     int i;
 
-    // Note: scatter counts are accumulated between dtwrite intervals
-    // and reset by the main loop after writing, not here
-
     extern int g_sidm_max_interaction_range;
+
+    // Pre-calculate sigma (velocity-independent for current cross-section model)
+    double sigma_precalc = 0.0;
+    if (npts > 0) {
+        double particle_mass_Msun = halo_mass_for_sidm / ((double)npts);
+        sigma_precalc = 2.089e-10 * g_sidm_kappa * particle_mass_Msun;
+    }
 
     for (i = 0; i < npts - 1; i++) {
         int nscat = g_sidm_max_interaction_range;
@@ -18728,13 +18839,14 @@ void perform_sidm_scattering_serial(double **particles, int npts, double dt, dou
             double sin_phi_m = particles[6][partner_idx];
             double cos_alpha = cos_phi_i * cos_phi_m + sin_phi_i * sin_phi_m;
 
-            // Calculate v_rel^2 using the Law of Cosines (no 3D vectors needed)
+            // Calculate relative velocity (optimized: single sqrt only)
             double v_rel_rad_sq = sqr(v_rad_i - v_rad_m);
             double v_rel_tan_sq = sqr(v_ti) + sqr(v_tm) - 2.0 * v_ti * v_tm * cos_alpha;
             double vrel_val = sqrt(v_rel_rad_sq + v_rel_tan_sq);
 
-            partialprobability[m] = sigmatotal(vrel_val, npts, halo_mass_for_sidm, rc_for_sidm) * vrel_val;
-            probability_sum_term += partialprobability[m];
+            double rate = sigma_precalc * vrel_val;
+            partialprobability[m] = rate;
+            probability_sum_term += rate;
         }
 
         // Determine the outer radius of the shell containing these nscat neighbors
@@ -18773,32 +18885,32 @@ void perform_sidm_scattering_serial(double **particles, int npts, double dt, dou
             // Calculate scattering rate using shell volume approximation
             double rate_dt = probability_sum_term * (0.5) * dt / (4.0 * PI * sqr(particles[0][i]) * radius_diff);
 
-            // Apply proper Poisson process transformation: P' = 1 - exp(-rate*dt)
-            // For small rate*dt, this approximates to rate*dt
-            // For large rate*dt, this correctly saturates at 1.0
-            probability = 1.0 - exp(-rate_dt);
+            // Poisson process with 2nd order Taylor approximation for efficiency
+            if (rate_dt < 0.01) {
+                probability = rate_dt * (1.0 - 0.5 * rate_dt);
+            } else {
+                probability = 1.0 - exp(-rate_dt);
+            }
         }
 
-        // Stochastic scattering determination with conditional RNG calls
-        if (gsl_rng_uniform(rng) < probability) {
+        // Extract particle ID for deterministic RNG
+        int part_id = (int)particles[3][i];
+
+        // Check if scattering occurs using deterministic hash
+        if (get_deterministic_rand(sidm_seed, timestep_idx, part_id, 0) < probability) {
             Nscatters_this_call++;
-            int m_scatter = 1; // Default to first neighbor
+            int m_scatter = 1;
 
-            // Weighted selection among multiple neighbors
+            // Weighted partner selection using deterministic hash
             if (nscat > 1 && probability_sum_term > 1e-15) {
-                double cumulative_prob[nscat + 1];
-                cumulative_prob[0] = 0.0;
+                double rnd_scaled = get_deterministic_rand(sidm_seed, timestep_idx, part_id, 1) * probability_sum_term;
+                double current_sum = 0.0;
                 for (int k = 1; k <= nscat; k++) {
-                    cumulative_prob[k] = (k > 1 ? cumulative_prob[k - 1] : 0.0) + partialprobability[k] / probability_sum_term;
-                }
-                if (nscat > 0) cumulative_prob[nscat] = 1.0;
-
-                // Simple uniform random for partner selection
-                double random_select = gsl_rng_uniform(rng);
-                m_scatter = 1;
-                // Select partner based on cumulative probability distribution
-                while (m_scatter < nscat && random_select > cumulative_prob[m_scatter]) {
-                    m_scatter++;
+                    current_sum += partialprobability[k];
+                    if (rnd_scaled <= current_sum) {
+                        m_scatter = k;
+                        break;
+                    }
                 }
             }
 
@@ -18829,50 +18941,12 @@ void perform_sidm_scattering_serial(double **particles, int npts, double dt, dou
             threevector Vrel_prime = make_threevector(Vi_prime.x - Vm_prime.x, Vi_prime.y - Vm_prime.y, Vi_prime.z - Vm_prime.z);
             double vrel_val = sqrt(dotproduct(Vrel_prime, Vrel_prime));
 
+            // Extract particle ID for deterministic RNG
+            int part_id = (int)particles[3][i];
+
             if (vrel_val > 1e-15) {
-                // Phase 2: Scattering Physics with simple RNG calls
-                threevector V_cm_prime = make_threevector((Vi_prime.x + Vm_prime.x)/2.0, (Vi_prime.y + Vm_prime.y)/2.0, (Vi_prime.z + Vm_prime.z)/2.0);
-                double costheta = 2.0 * gsl_rng_uniform(rng) - 1.0;  // Simple uniform in [-1, 1]
-                double sintheta = sqrt(fmax(0.0, 1.0 - costheta*costheta));
-                double phif_scatter = 2.0 * PI * gsl_rng_uniform(rng);  // Simple uniform in [0, 2π]
-                double cf = cos(phif_scatter);
-                double sf = sin(phif_scatter);
-                threevector nhat0,nhat1,nhat2,nhatref;
-                nhat0=make_threevector(Vrel_prime.x/vrel_val,Vrel_prime.y/vrel_val,Vrel_prime.z/vrel_val);
-                if(fabs(nhat0.z)<0.999)nhatref=make_threevector(0.0,0.0,1.0);else nhatref=make_threevector(1.0,0.0,0.0);
-                nhat1=crossproduct(nhat0,nhatref);double normnhat1=sqrt(dotproduct(nhat1,nhat1));
-                if(normnhat1<1e-15){if(fabs(nhat0.x)<0.999)nhatref=make_threevector(1.0,0.0,0.0);else nhatref=make_threevector(0.0,1.0,0.0);
-                nhat1=crossproduct(nhat0,nhatref);normnhat1=sqrt(dotproduct(nhat1,nhat1));if(normnhat1<1e-15){Nscatters_this_call--;continue;}}
-                nhat1=make_threevector(nhat1.x/normnhat1,nhat1.y/normnhat1,nhat1.z/normnhat1); nhat2=crossproduct(nhat0,nhat1);
-                threevector nhat_perp_rotated=make_threevector(nhat1.x*cf+nhat2.x*sf,nhat1.y*cf+nhat2.y*sf,nhat1.z*cf+nhat2.z*sf);
-                threevector V_rel_final_half=make_threevector((vrel_val/2.0)*(costheta*nhat0.x+sintheta*nhat_perp_rotated.x),(vrel_val/2.0)*(costheta*nhat0.y+sintheta*nhat_perp_rotated.y),(vrel_val/2.0)*(costheta*nhat0.z+sintheta*nhat_perp_rotated.z));
-
-                threevector Vifinal_prime = make_threevector(V_cm_prime.x+V_rel_final_half.x,V_cm_prime.y+V_rel_final_half.y,V_cm_prime.z+V_rel_final_half.z);
-                threevector Vmfinal_prime = make_threevector(V_cm_prime.x-V_rel_final_half.x,V_cm_prime.y-V_rel_final_half.y,V_cm_prime.z-V_rel_final_half.z);
-
-                // Phase 3: Inverse Transformation (Decompose and Un-rotate)
-                particles[1][i] = Vifinal_prime.z;
-                particles[1][actual_partner_idx] = Vmfinal_prime.z;
-
-                double Vperp_i_final_mag = sqrt(sqr(Vifinal_prime.x)+sqr(Vifinal_prime.y));
-                double Vperp_m_final_mag = sqrt(sqr(Vmfinal_prime.x)+sqr(Vmfinal_prime.y));
-
-                particles[2][i] = particles[0][i] * Vperp_i_final_mag;
-                particles[2][actual_partner_idx] = particles[0][actual_partner_idx] * Vperp_m_final_mag;
-
-                // STORED PHI METHOD: Extract and update phi values after scattering
-                // Extract new cos/sin in rotated frame (where m was aligned with x-axis)
-                double cos_phi_i_final_prime = (Vperp_i_final_mag > 1e-15) ? Vifinal_prime.x / Vperp_i_final_mag : 1.0;
-                double sin_phi_i_final_prime = (Vperp_i_final_mag > 1e-15) ? Vifinal_prime.y / Vperp_i_final_mag : 0.0;
-                double cos_phi_m_final_prime = (Vperp_m_final_mag > 1e-15) ? Vmfinal_prime.x / Vperp_m_final_mag : 1.0;
-                double sin_phi_m_final_prime = (Vperp_m_final_mag > 1e-15) ? Vmfinal_prime.y / Vperp_m_final_mag : 0.0;
-
-                // Un-rotate back to global frame using angle addition formulas: cos(a+b) and sin(a+b)
-                // These stored values are used in the next timestep for any subsequent scatters
-                particles[5][i] = cos_phi_i_final_prime * cos_phi_m - sin_phi_i_final_prime * sin_phi_m;
-                particles[6][i] = sin_phi_i_final_prime * cos_phi_m + cos_phi_i_final_prime * sin_phi_m;
-                particles[5][actual_partner_idx] = cos_phi_m_final_prime * cos_phi_m - sin_phi_m_final_prime * sin_phi_m;
-                particles[6][actual_partner_idx] = sin_phi_m_final_prime * cos_phi_m + cos_phi_m_final_prime * sin_phi_m;
+                // Call unified scatter function
+                perform_scatter_update(particles, i, actual_partner_idx, sidm_seed, timestep_idx, part_id);
 
                 // Mark both scattered particles in case it is needed elsewhere
                 int orig_id1 = (int)particles[3][i];
@@ -18910,116 +18984,6 @@ void perform_sidm_scattering_serial(double **particles, int npts, double dt, dou
  * @param j Second particle index
  * @param rng Random number generator for scattering angles
  */
-static inline void perform_scatter_update(
-    double **particles,
-    int i,
-    int j,
-    gsl_rng *rng
-) {
-    // Get current velocities
-    double cos_phi_i = particles[5][i];
-    double sin_phi_i = particles[6][i];
-    double Viperp = particles[2][i] / particles[0][i];
-    threevector Vi = make_threevector(Viperp * cos_phi_i, Viperp * sin_phi_i, particles[1][i]);
-
-    double cos_phi_j = particles[5][j];
-    double sin_phi_j = particles[6][j];
-    double Vjperp = particles[2][j] / particles[0][j];
-    threevector Vj = make_threevector(Vjperp * cos_phi_j, Vjperp * sin_phi_j, particles[1][j]);
-
-    // Calculate relative velocity
-    threevector Vrel = make_threevector(Vi.x - Vj.x, Vi.y - Vj.y, Vi.z - Vj.z);
-    double vrel = sqrt(dotproduct(Vrel, Vrel));
-
-    if (vrel < 1e-15) return;  // No scattering for zero relative velocity
-
-    // Generate random scattering angles
-    double costheta = 2.0 * gsl_rng_uniform(rng) - 1.0;
-    double sintheta = sqrt(fmax(0.0, 1.0 - costheta * costheta));
-    double phif = 2.0 * PI * gsl_rng_uniform(rng);
-    double cf = cos(phif);
-    double sf = sin(phif);
-
-    // Build orthonormal basis for rotation
-    threevector nhat0, nhat1, nhat2, nhatref;
-    nhat0 = make_threevector(Vrel.x/vrel, Vrel.y/vrel, Vrel.z/vrel);
-
-    if (fabs(nhat0.z) < 0.999) {
-        nhatref = make_threevector(0.0, 0.0, 1.0);
-    } else {
-        nhatref = make_threevector(1.0, 0.0, 0.0);
-    }
-
-    nhat1 = crossproduct(nhat0, nhatref);
-    double normnhat1 = sqrt(dotproduct(nhat1, nhat1));
-
-    if (normnhat1 < 1e-15) {
-        if (fabs(nhat0.x) < 0.999) {
-            nhatref = make_threevector(1.0, 0.0, 0.0);
-        } else {
-            nhatref = make_threevector(0.0, 1.0, 0.0);
-        }
-        nhat1 = crossproduct(nhat0, nhatref);
-        normnhat1 = sqrt(dotproduct(nhat1, nhat1));
-        if (normnhat1 < 1e-15) return;  // Degenerate case
-    }
-
-    nhat1 = make_threevector(nhat1.x/normnhat1, nhat1.y/normnhat1, nhat1.z/normnhat1);
-    nhat2 = crossproduct(nhat0, nhat1);
-
-    // Rotate relative velocity vector
-    threevector nperp_rot = make_threevector(
-        nhat1.x * cf + nhat2.x * sf,
-        nhat1.y * cf + nhat2.y * sf,
-        nhat1.z * cf + nhat2.z * sf
-    );
-
-    // New relative velocity (half for each particle)
-    threevector Vrel_f_half = make_threevector(
-        (vrel/2.0) * (costheta * nhat0.x + sintheta * nperp_rot.x),
-        (vrel/2.0) * (costheta * nhat0.y + sintheta * nperp_rot.y),
-        (vrel/2.0) * (costheta * nhat0.z + sintheta * nperp_rot.z)
-    );
-
-    // Calculate center of mass velocity
-    threevector Vcm = make_threevector((Vi.x + Vj.x)/2.0, (Vi.y + Vj.y)/2.0, (Vi.z + Vj.z)/2.0);
-
-    // Calculate final velocities
-    threevector Vi_final = make_threevector(
-        Vcm.x + Vrel_f_half.x,
-        Vcm.y + Vrel_f_half.y,
-        Vcm.z + Vrel_f_half.z
-    );
-    threevector Vj_final = make_threevector(
-        Vcm.x - Vrel_f_half.x,
-        Vcm.y - Vrel_f_half.y,
-        Vcm.z - Vrel_f_half.z
-    );
-
-    // Update particle i
-    particles[1][i] = Vi_final.z;  // Vz
-    double Viperp_new = sqrt(Vi_final.x * Vi_final.x + Vi_final.y * Vi_final.y);
-    particles[2][i] = particles[0][i] * Viperp_new;  // r*Vperp
-    if (Viperp_new > 1e-15) {
-        particles[5][i] = Vi_final.x / Viperp_new;  // cos(phi)
-        particles[6][i] = Vi_final.y / Viperp_new;  // sin(phi)
-    } else {
-        particles[5][i] = 1.0;
-        particles[6][i] = 0.0;
-    }
-
-    // Update particle j
-    particles[1][j] = Vj_final.z;  // Vz
-    double Vjperp_new = sqrt(Vj_final.x * Vj_final.x + Vj_final.y * Vj_final.y);
-    particles[2][j] = particles[0][j] * Vjperp_new;  // r*Vperp
-    if (Vjperp_new > 1e-15) {
-        particles[5][j] = Vj_final.x / Vjperp_new;  // cos(phi)
-        particles[6][j] = Vj_final.y / Vjperp_new;  // sin(phi)
-    } else {
-        particles[5][j] = 1.0;
-        particles[6][j] = 0.0;
-    }
-}
 
 /**
  * @brief Performs SIDM scattering calculations for one timestep using graph coloring parallel algorithm.
@@ -19065,21 +19029,27 @@ static inline void perform_scatter_update(
  */
 // Structure for reorganized particle data
 void perform_sidm_scattering_parallel_graphcolor(
-    double **particles,
+    double ** __restrict__ particles,
     int npts,
     double dt,
-    double current_time,
-    gsl_rng **rng_per_thread_list,
-    int num_threads_for_rng,
+    int timestep_idx,
+    uint64_t sidm_seed,
     long long *Nscatter_total_step,
     double halo_mass_for_sidm,
     double rc_for_sidm,
     int *current_scatter_counts
 ) {
-    (void)current_time; // Unused parameter
+    (void)rc_for_sidm;
     long long total_scatters = 0;
     extern int g_sidm_max_interaction_range;
-    const int NUM_COLORS = g_sidm_max_interaction_range + 1;  // Maximum interaction distance + 1
+    const int NUM_COLORS = g_sidm_max_interaction_range + 1;
+
+    // Pre-calculate sigma (velocity-independent for current cross-section model)
+    double sigma_precalc = 0.0;
+    if (npts > 0) {
+        double particle_mass_Msun = halo_mass_for_sidm / ((double)npts);
+        sigma_precalc = 2.089e-10 * g_sidm_kappa * particle_mass_Msun;
+    }
 
     // Process each color sequentially
     for (int color = 0; color < NUM_COLORS; color++) {
@@ -19088,32 +19058,16 @@ void perform_sidm_scattering_parallel_graphcolor(
         // Process all particles of this color in parallel
         #pragma omp parallel reduction(+:color_scatters)
         {
-            // Get thread-local RNG
-            gsl_rng *local_rng = NULL;
-            int thread_id = 0;
-            #ifdef _OPENMP
-                thread_id = omp_get_thread_num();
-            #endif
+            // Cache restrict pointers for better vectorization
+            double * __restrict__ p_r = particles[0];
+            double * __restrict__ p_vrad = particles[1];
+            double * __restrict__ p_L = particles[2];
+            double * __restrict__ p_ids = particles[3];
+            double * __restrict__ p_cos_phi = particles[5];
+            double * __restrict__ p_sin_phi = particles[6];
 
-            if (rng_per_thread_list != NULL && thread_id < num_threads_for_rng &&
-                rng_per_thread_list[thread_id] != NULL) {
-                local_rng = rng_per_thread_list[thread_id];
-            } else {
-                // Thread has no RNG - skip SIDM for this thread
-                #pragma omp critical (rng_error_graphcolor)
-                {
-                    fprintf(stderr, "WARNING: Thread %d has no valid RNG in graph coloring SIDM\n", thread_id);
-                }
-                local_rng = NULL;
-            }
-
-            // Process particles with current color
             #pragma omp for schedule(guided)
             for (int i = color; i < npts; i += NUM_COLORS) {
-                // Skip if no RNG available
-                if (local_rng == NULL) continue;
-
-                // Skip if too close to end
                 if (i >= npts - 1) continue;
 
                 // Determine how many neighbors to check
@@ -19121,76 +19075,84 @@ void perform_sidm_scattering_parallel_graphcolor(
                 if (npts - 1 - i < nscat) nscat = npts - 1 - i;
                 if (nscat <= 0) continue;
 
-                // Arrays for probability calculations (VLA for flexibility)
                 double partialprobability[nscat + 1];
                 double probability_sum = 0.0;
 
-                // Get particle i's current state
-                double cos_phi_i = particles[5][i];
-                double sin_phi_i = particles[6][i];
-                double Viperp = particles[2][i] / particles[0][i];
-                threevector Vi = make_threevector(Viperp * cos_phi_i, Viperp * sin_phi_i, particles[1][i]);
+                double r_i = p_r[i];
+                double r_i_sq = r_i * r_i;
+                double cos_phi_i = p_cos_phi[i];
+                double sin_phi_i = p_sin_phi[i];
+                double Viperp = p_L[i] / r_i;
+                threevector Vi = make_threevector(Viperp * cos_phi_i, Viperp * sin_phi_i, p_vrad[i]);
 
                 // Check all possible scatter partners
                 for (int m = 1; m <= nscat; m++) {
                     int j = i + m;
 
                     // Get neighbor's state
-                    double cos_phi_j = particles[5][j];
-                    double sin_phi_j = particles[6][j];
-                    double Vjperp = particles[2][j] / particles[0][j];
-                    threevector Vj = make_threevector(Vjperp * cos_phi_j, Vjperp * sin_phi_j, particles[1][j]);
+                    double cos_phi_j = p_cos_phi[j];
+                    double sin_phi_j = p_sin_phi[j];
+                    double Vjperp = p_L[j] / p_r[j];
+                    threevector Vj = make_threevector(Vjperp * cos_phi_j, Vjperp * sin_phi_j, p_vrad[j]);
 
                     // Calculate relative velocity
                     threevector Vrel = make_threevector(Vi.x - Vj.x, Vi.y - Vj.y, Vi.z - Vj.z);
                     double vrel = sqrt(dotproduct(Vrel, Vrel));
 
                     // Calculate partial probability (cross section * relative velocity)
-                    partialprobability[m] = sigmatotal(vrel, npts, halo_mass_for_sidm, rc_for_sidm) * vrel;
-                    probability_sum += partialprobability[m];
+                    double rate = sigma_precalc * vrel;
+                    partialprobability[m] = rate;
+                    probability_sum += rate;
                 }
 
                 // Calculate shell volume for probability normalization
                 int outer_shell_idx = (i + nscat + 1 < npts) ? i + nscat + 1 : i + nscat;
                 double radius_diff = 0.0;
                 if (outer_shell_idx < npts && outer_shell_idx > i) {
-                    radius_diff = particles[0][outer_shell_idx] - particles[0][i];
+                    radius_diff = p_r[outer_shell_idx] - r_i;
                 }
 
-                // Calculate total scatter probability
+                // Extract particle ID for deterministic RNG
+                int part_id = (int)p_ids[i];
+
                 double probability = 0.0;
-                if (radius_diff > 1e-15 && particles[0][i] > 1e-15 && probability_sum > 1e-30) {
-                    // Scattering rate using shell volume approximation
-                    double rate_dt = probability_sum * 0.5 * dt / (4.0 * PI * sqr(particles[0][i]) * radius_diff);
-                    // Proper Poisson process: P = 1 - exp(-rate*dt)
-                    probability = 1.0 - exp(-rate_dt);
+                if (radius_diff > 1e-15 && probability_sum > 1e-30) {
+                    double rate_dt = probability_sum * 0.5 * dt / (4.0 * PI * r_i_sq * radius_diff);
+
+                    // Poisson process with 2nd order Taylor approximation for efficiency
+                    if (rate_dt < 0.01) {
+                        probability = rate_dt * (1.0 - 0.5 * rate_dt);
+                    } else {
+                        probability = 1.0 - exp(-rate_dt);
+                    }
                 }
 
-                // Decide if scattering occurs
-                if (gsl_rng_uniform(local_rng) < probability) {
+                // Check if scattering occurs using deterministic random number
+                double rnd_check = get_deterministic_rand(sidm_seed, timestep_idx, part_id, 0);
+
+                if (rnd_check < probability) {
                     // Select which neighbor to scatter with
                     int m_scatter = 1;
                     if (nscat > 1 && probability_sum > 1e-15) {
-                        // Build cumulative probability distribution
-                        double cumulative_prob[nscat + 1];
-                        cumulative_prob[0] = 0.0;
-                        for (int k = 1; k <= nscat; k++) {
-                            cumulative_prob[k] = cumulative_prob[k-1] + partialprobability[k] / probability_sum;
-                        }
-                        cumulative_prob[nscat] = 1.0;  // Ensure normalization
+                        // Select partner using deterministic random number
+                        double rnd_neighbor = get_deterministic_rand(sidm_seed, timestep_idx, part_id, 1);
+                        double rnd_scaled = rnd_neighbor * probability_sum;
 
-                        // Select partner based on weighted probability
-                        double random_select = gsl_rng_uniform(local_rng);
-                        while (m_scatter < nscat && random_select > cumulative_prob[m_scatter]) {
-                            m_scatter++;
+                        double current_sum = 0.0;
+                        for (int k = 1; k <= nscat; k++) {
+                            current_sum += partialprobability[k];
+                            if (rnd_scaled <= current_sum) {
+                                m_scatter = k;
+                                break;
+                            }
                         }
                     }
 
                     int j = i + m_scatter;
                     if (j >= npts) continue;  // Safety check
 
-                    // Perform the scatter update using the existing function
-                    perform_scatter_update(particles, i, j, local_rng);
+                    // Perform scatter update using deterministic RNG
+                    perform_scatter_update(particles, i, j, sidm_seed, timestep_idx, part_id);
 
                     // Update scatter counts
                     color_scatters++;

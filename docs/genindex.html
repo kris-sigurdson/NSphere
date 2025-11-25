@@ -1010,8 +1010,6 @@
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv422g_master_seed_provided">g_master_seed_provided (C++ member)</a>
 </li>
-      <li><a href="c_api/nsphere_core.html#_CPPv425g_max_omp_threads_for_rng">g_max_omp_threads_for_rng (C++ member)</a>
-</li>
       <li><a href="c_api/nsphere_core.html#_CPPv48g_mu_buf">g_mu_buf (C++ member)</a>
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv428g_nfw_profile_falloff_factor">g_nfw_profile_falloff_factor (C++ member)</a>
@@ -1024,13 +1022,15 @@
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv426g_om_aniso_factor_provided">g_om_aniso_factor_provided (C++ member)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="c_api/nsphere_core.html#_CPPv422g_om_anisotropy_radius">g_om_anisotropy_radius (C++ member)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="c_api/nsphere_core.html#_CPPv420g_om_ra_scale_factor">g_om_ra_scale_factor (C++ member)</a>
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv424g_particle_scatter_state">g_particle_scatter_state (C++ member)</a>
+</li>
+      <li><a href="c_api/nsphere_core.html#_CPPv421g_precalc_force_const">g_precalc_force_const (C++ member)</a>
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv418g_profile_type_str">g_profile_type_str (C++ member)</a>
 </li>
@@ -1049,8 +1049,6 @@
       <li><a href="c_api/nsphere_core.html#_CPPv428g_restart_snapshots_is_count">g_restart_snapshots_is_count (C++ member)</a>
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv45g_rng">g_rng (C++ member)</a>
-</li>
-      <li><a href="c_api/nsphere_core.html#_CPPv416g_rng_per_thread">g_rng_per_thread (C++ member)</a>
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv420g_scale_radius_param">g_scale_radius_param (C++ member)</a>
 </li>
@@ -1144,6 +1142,8 @@
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv424get_available_disk_spacePKc">get_available_disk_space (C++ function)</a>
 </li>
+      <li><a href="c_api/nsphere_core.html#_CPPv422get_deterministic_rand8uint64_tiii">get_deterministic_rand (C++ function)</a>
+</li>
       <li><a href="python_api/index.html#nsphere_plot.get_file_prefix">get_file_prefix() (in module nsphere_plot)</a>
 </li>
       <li><a href="python_api/index.html#nsphere_plot.get_mem_usage_mb">get_mem_usage_mb() (in module nsphere_plot)</a>
@@ -1170,7 +1170,7 @@
 </li>
       <li><a href="c_api/nsphere_core.html#c.HALO_MASS_NFW">HALO_MASS_NFW (C macro)</a>
 </li>
-      <li><a href="c_api/nsphere_core.html#_CPPv416handle_sidm_stepPPdidddiiPi">handle_sidm_step (C++ function)</a>
+      <li><a href="c_api/nsphere_core.html#_CPPv416handle_sidm_stepPPdidddiiPii">handle_sidm_step (C++ function)</a>
 </li>
       <li><a href="c_api/quadsort.html#c.head_branchless_merge">head_branchless_merge (C macro)</a>
 </li>
@@ -1290,11 +1290,13 @@
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv413massintegranddPv">massintegrand (C++ function)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="c_api/nsphere_core.html#_CPPv423massintegrand_hernquistdPv">massintegrand_hernquist (C++ function)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="c_api/nsphere_core.html#_CPPv431massintegrand_profile_nfwcutoffdPv">massintegrand_profile_nfwcutoff (C++ function)</a>
+</li>
+      <li><a href="c_api/nsphere_core.html#_CPPv45mix648uint64_t">mix64 (C++ function)</a>
 </li>
       <li>
     module
@@ -1599,11 +1601,11 @@
 </li>
       <li><a href="c_api/nsphere_core.html#_CPPv4N8PartData4vradE">PartData::vrad (C++ member)</a>
 </li>
-      <li><a href="c_api/nsphere_core.html#_CPPv422perform_scatter_updatePPdiiP7gsl_rng">perform_scatter_update (C++ function)</a>
+      <li><a href="c_api/nsphere_core.html#_CPPv422perform_scatter_updatePPdii8uint64_tii">perform_scatter_update (C++ function)</a>
 </li>
-      <li><a href="c_api/nsphere_core.html#_CPPv443perform_sidm_scattering_parallel_graphcolorPPdiddPP7gsl_rngiPxddPi">perform_sidm_scattering_parallel_graphcolor (C++ function)</a>
+      <li><a href="c_api/nsphere_core.html#_CPPv443perform_sidm_scattering_parallel_graphcolorPPdidi8uint64_tPxddPi">perform_sidm_scattering_parallel_graphcolor (C++ function)</a>
 </li>
-      <li><a href="c_api/nsphere_core.html#_CPPv430perform_sidm_scattering_serialPPdiddP7gsl_rngPxddPi">perform_sidm_scattering_serial (C++ function)</a>
+      <li><a href="c_api/nsphere_core.html#_CPPv430perform_sidm_scattering_serialPPdidi8uint64_tPxddPi">perform_sidm_scattering_serial (C++ function)</a>
 </li>
       <li><a href="python_api/index.html#nsphere_plot.phase_space_process_rank_file">phase_space_process_rank_file() (in module nsphere_plot)</a>
 </li>

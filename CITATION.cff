@@ -6,10 +6,10 @@ authors: # Software authors
     given-names: Kris
   - family-names: Kamionkowski
     given-names: Marc
-version: "0.1.7"
+version: "0.1.8"
 license: "Apache-2.0"
 repository: "https://github.com/NSphere-SIDM/NSphere-SIDM"
-date-released: 2025-10-28
+date-released: 2025-11-25
 preferred-citation:
   type: article
   title: "Numerical evolution of self-gravitating halos of self-interacting dark matter"

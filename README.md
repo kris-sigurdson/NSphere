@@ -411,16 +411,16 @@ For Methods, Science, and Algorithms please cite:
 ---
 If you wish to reference a specific software version please cite:
 
-**Software Citation (v0.1.7):**
+**Software Citation (v0.1.8):**
 
-*   Sigurdson, K., & Kamionkowski, M. (2025). *NSphere-SIDM: Spherical N-body Simulation Code for Self-Interacting Dark Matter* (Version 0.1.7) [Software]. GitHub. https://github.com/NSphere-SIDM/NSphere-SIDM
+*   Sigurdson, K., & Kamionkowski, M. (2025). *NSphere-SIDM: Spherical N-body Simulation Code for Self-Interacting Dark Matter* (Version 0.1.8) [Software]. GitHub. https://github.com/NSphere-SIDM/NSphere-SIDM
 
 *BibTeX for Software:*
 ````bibtex
 @software{SigurdsonKamionkowski2025NSphereSIDM,
   author       = {Sigurdson, Kris and Kamionkowski, Marc},
   title        = {{NSphere-SIDM: Spherical N-body Simulation Code for Self-Interacting Dark Matter}},
-  version      = {0.1.7},
+  version      = {0.1.8},
   year         = {2025},
   publisher    = {GitHub},
   url          = {https://github.com/NSphere-SIDM/NSphere-SIDM}

@@ -253,15 +253,15 @@ Halo Profile Configuration
 
 .. option:: --halo-mass <float>
 
-   Total halo mass in solar masses (M☉) for the selected profile. This sets
+   Total halo mass in solar masses (:math:`M_{\odot}`) for the selected profile. This sets
    the overall mass normalization of the initial conditions.
-   [Default: 1.15e9]
+   [Default: NFW=1.15e9, Hernquist/Cored=1.0e12]
 
 .. option:: --profile <type>
 
    Select the halo density profile type for initial conditions.
 
-   - ``nfw``: NFW profile with exponential cutoff
+   - ``nfw``: NFW profile with cutoff
    - ``cored``: Cored Plummer-like profile
    - ``hernquist``: Hernquist profile (supports constant-β and OM anisotropy)
 
@@ -272,18 +272,18 @@ Halo Profile Configuration
    Scale radius in kpc for the selected profile. For NFW profiles this is
    the traditional scale radius rs; for cored profiles this is the core radius;
    for Hernquist profiles this is the scale radius a.
-   [Default: 23]
+   [Default: NFW=1.18, Hernquist/Cored=23]
 
 .. option:: --cutoff-factor <float>
 
    Sets the outer truncation radius as a multiple of the scale radius. The
-   maximum radius rmax = cutoff-factor × scale-radius.
+   maximum radius :math:`r_{max} = f_{cutoff} \times r_{scale}`.
    [Default: 85.0]
 
 .. option:: --falloff-factor <float>
 
    NFW-specific concentration parameter that controls the sharpness of the
-   exponential cutoff at large radii. Only used for NFW profiles.
+   cutoff at large radii. Only used for NFW profiles.
    [Default: 19.0]
 
 Anisotropy Models
@@ -291,11 +291,11 @@ Anisotropy Models
 
 .. option:: --aniso-beta <float>
 
-   Constant anisotropy parameter β for Hernquist profile.
-   Controls velocity anisotropy: β = 0 (isotropic), β > 0 (radially biased),
-   β < 0 (tangentially biased).
+   Constant anisotropy parameter :math:`\beta` for Hernquist profile.
+   Controls velocity anisotropy: :math:`\beta = 0` (isotropic), :math:`\beta > 0` (radially biased),
+   :math:`\beta < 0` (tangentially biased).
 
-   Valid range: -1 ≤ β ≤ 0.5
+   Valid range: :math:`-1 \leq \beta \leq 0.5`
 
    Only compatible with ``--profile hernquist``.
    Cannot be used with ``--aniso-factor`` or ``--aniso-betascale``.
@@ -304,10 +304,10 @@ Anisotropy Models
 .. option:: --aniso-factor <float>
 
    Osipkov-Merritt anisotropy radius as multiple of scale radius.
-   Sets r_a = factor × r_scale.
+   Sets :math:`r_a = f_{aniso} \times r_{scale}`.
 
-   Enables OM model with β(r) = r²/(r² + r_a²), which transitions from
-   isotropic (β=0) at r=0 to radially biased (β→1) at large radii.
+   Enables OM model with :math:`\beta(r) = r^2/(r^2 + r_a^2)`, which transitions from
+   isotropic (:math:`\beta=0`) at r=0 to radially biased (:math:`\beta \to 1`) at large radii.
 
    Compatible with all profiles (NFW, Cored, Hernquist).
    Cannot be used with ``--aniso-betascale``.
@@ -315,8 +315,8 @@ Anisotropy Models
 
 .. option:: --aniso-betascale <float>
 
-   Alternative to ``--aniso-factor``: specify β at the scale radius directly.
-   Calculates r_a/r_s = √(1/β_s - 1) automatically.
+   Alternative to ``--aniso-factor``: specify :math:`\beta` at the scale radius directly.
+   Calculates :math:`r_a/r_s = \sqrt{1/\beta_s - 1}` automatically.
 
    Valid range: (0, 1)
 
