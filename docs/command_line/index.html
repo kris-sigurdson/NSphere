@@ -17,6 +17,8 @@
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -390,9 +392,9 @@ in the output filename suffix, in addition to the parameters.
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-nsphere-halo-mass">
 <span class="sig-name descname"><span class="pre">--halo-mass</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;float&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-halo-mass" title="Link to this definition"></a></dt>
-<dd><p>Total halo mass in solar masses (M☉) for the selected profile. This sets
+<dd><p>Total halo mass in solar masses (<span class="math notranslate nohighlight">\(M_{\odot}\)</span>) for the selected profile. This sets
 the overall mass normalization of the initial conditions.
-[Default: 1.15e9]</p>
+[Default: NFW=1.15e9, Hernquist/Cored=1.0e12]</p>
 </dd></dl>
 
 <dl class="std option">
@@ -400,7 +402,7 @@ the overall mass normalization of the initial conditions.
 <span class="sig-name descname"><span class="pre">--profile</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;type&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-profile" title="Link to this definition"></a></dt>
 <dd><p>Select the halo density profile type for initial conditions.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">nfw</span></code>: NFW profile with exponential cutoff</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nfw</span></code>: NFW profile with cutoff</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cored</span></code>: Cored Plummer-like profile</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hernquist</span></code>: Hernquist profile (supports constant-β and OM anisotropy)</p></li>
 </ul>
@@ -413,14 +415,14 @@ the overall mass normalization of the initial conditions.
 <dd><p>Scale radius in kpc for the selected profile. For NFW profiles this is
 the traditional scale radius rs; for cored profiles this is the core radius;
 for Hernquist profiles this is the scale radius a.
-[Default: 23]</p>
+[Default: NFW=1.18, Hernquist/Cored=23]</p>
 </dd></dl>
 
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-nsphere-cutoff-factor">
 <span class="sig-name descname"><span class="pre">--cutoff-factor</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;float&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-cutoff-factor" title="Link to this definition"></a></dt>
 <dd><p>Sets the outer truncation radius as a multiple of the scale radius. The
-maximum radius rmax = cutoff-factor × scale-radius.
+maximum radius <span class="math notranslate nohighlight">\(r_{max} = f_{cutoff} \times r_{scale}\)</span>.
 [Default: 85.0]</p>
 </dd></dl>
 
@@ -428,7 +430,7 @@ maximum radius rmax = cutoff-factor × scale-radius.
 <dt class="sig sig-object std" id="cmdoption-nsphere-falloff-factor">
 <span class="sig-name descname"><span class="pre">--falloff-factor</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;float&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-falloff-factor" title="Link to this definition"></a></dt>
 <dd><p>NFW-specific concentration parameter that controls the sharpness of the
-exponential cutoff at large radii. Only used for NFW profiles.
+cutoff at large radii. Only used for NFW profiles.
 [Default: 19.0]</p>
 </dd></dl>
 
@@ -438,10 +440,10 @@ exponential cutoff at large radii. Only used for NFW profiles.
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-nsphere-aniso-beta">
 <span class="sig-name descname"><span class="pre">--aniso-beta</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;float&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-aniso-beta" title="Link to this definition"></a></dt>
-<dd><p>Constant anisotropy parameter β for Hernquist profile.
-Controls velocity anisotropy: β = 0 (isotropic), β &gt; 0 (radially biased),
-β &lt; 0 (tangentially biased).</p>
-<p>Valid range: -1 ≤ β ≤ 0.5</p>
+<dd><p>Constant anisotropy parameter <span class="math notranslate nohighlight">\(\beta\)</span> for Hernquist profile.
+Controls velocity anisotropy: <span class="math notranslate nohighlight">\(\beta = 0\)</span> (isotropic), <span class="math notranslate nohighlight">\(\beta &gt; 0\)</span> (radially biased),
+<span class="math notranslate nohighlight">\(\beta &lt; 0\)</span> (tangentially biased).</p>
+<p>Valid range: <span class="math notranslate nohighlight">\(-1 \leq \beta \leq 0.5\)</span></p>
 <p>Only compatible with <code class="docutils literal notranslate"><span class="pre">--profile</span> <span class="pre">hernquist</span></code>.
 Cannot be used with <code class="docutils literal notranslate"><span class="pre">--aniso-factor</span></code> or <code class="docutils literal notranslate"><span class="pre">--aniso-betascale</span></code>.
 [Default: 0.0]</p>
@@ -451,9 +453,9 @@ Cannot be used with <code class="docutils literal notranslate"><span class="pre"
 <dt class="sig sig-object std" id="cmdoption-nsphere-aniso-factor">
 <span class="sig-name descname"><span class="pre">--aniso-factor</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;float&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-aniso-factor" title="Link to this definition"></a></dt>
 <dd><p>Osipkov-Merritt anisotropy radius as multiple of scale radius.
-Sets r_a = factor × r_scale.</p>
-<p>Enables OM model with β(r) = r²/(r² + r_a²), which transitions from
-isotropic (β=0) at r=0 to radially biased (β→1) at large radii.</p>
+Sets <span class="math notranslate nohighlight">\(r_a = f_{aniso} \times r_{scale}\)</span>.</p>
+<p>Enables OM model with <span class="math notranslate nohighlight">\(\beta(r) = r^2/(r^2 + r_a^2)\)</span>, which transitions from
+isotropic (<span class="math notranslate nohighlight">\(\beta=0\)</span>) at r=0 to radially biased (<span class="math notranslate nohighlight">\(\beta \to 1\)</span>) at large radii.</p>
 <p>Compatible with all profiles (NFW, Cored, Hernquist).
 Cannot be used with <code class="docutils literal notranslate"><span class="pre">--aniso-betascale</span></code>.
 [Default: Off]</p>
@@ -462,8 +464,8 @@ Cannot be used with <code class="docutils literal notranslate"><span class="pre"
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-nsphere-aniso-betascale">
 <span class="sig-name descname"><span class="pre">--aniso-betascale</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;float&gt;</span></span><a class="headerlink" href="#cmdoption-nsphere-aniso-betascale" title="Link to this definition"></a></dt>
-<dd><p>Alternative to <code class="docutils literal notranslate"><span class="pre">--aniso-factor</span></code>: specify β at the scale radius directly.
-Calculates r_a/r_s = √(1/β_s - 1) automatically.</p>
+<dd><p>Alternative to <code class="docutils literal notranslate"><span class="pre">--aniso-factor</span></code>: specify <span class="math notranslate nohighlight">\(\beta\)</span> at the scale radius directly.
+Calculates <span class="math notranslate nohighlight">\(r_a/r_s = \sqrt{1/\beta_s - 1}\)</span> automatically.</p>
 <p>Valid range: (0, 1)</p>
 <p>Cannot be used with <code class="docutils literal notranslate"><span class="pre">--aniso-factor</span></code>.
 [Default: Off]</p>

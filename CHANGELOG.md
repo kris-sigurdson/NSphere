@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2025-11-25
+
+This release addresses a critical bug causing unphysical gravothermal collapse in NFW SIDM simulations. It also achieves byte-for-byte reproducibility with a new deterministic RNG and unifies the serial and parallel physics implementations.
+
+### Notes
+
+*   Fixes a critical bug exclusive to the NFW profile introduced in the last update. The issue caused uninitialized particle data, leading to excess correlations and rapid, unphysical gravothermal collapse in SIDM simulations.
+
+### Changed
+
+*   **Physics and Numerics:**
+    *   Replaced the per-thread GSL RNG system for SIDM scattering with a deterministic, counter-based hash RNG to ensure byte-for-byte reproducibility in parallel SIDM simulations.
+    *   The serial SIDM implementation now calls the same core physics function as the parallel version, unifying the physics logic.
+
+*   **Performance:**
+    *   Scatter calculations have been optimized with a branchless orthonormal basis construction to improve CPU pipeline efficiency.
+
+*   **User Interface:**
+    *   Trajectory plot labels now use scientific notation for very small angular momentum values to improve readability.
+
+### Fixed
+
+*   **Physics and Numerics:**
+    *   Corrected a double-allocation bug in the NFW initialization pathway that caused memory leaks and left phi angle data uninitialized, leading to unphysical gravothermal collapse.
+    *   Fixed an issue where all particles were initialized with positive angular momentum; sign is now correctly randomized to restore rotational symmetry. This had no physical consequences for simulation evolution.
+    *   Corrected the sorting logic for the "lowest absolute L" mode to use `fabs(L)`, which ensures it selects particles with the smallest angular momentum.
+
+*   **Simulation Workflow:**
+    *   Simplified the logic for the simulation extend mode to hand off to the more robust restart machinery, fixing an issue that caused duplicate snapshots.
+
+*   **Documentation:**
+    *   Updated command-line help and Sphinx documentation with profile-specific parameter defaults and converted all remaining Unicode symbols to LaTeX math notation.
+
+### Removed
+
+*   **Code Quality:**
+    *   The GSL RNG state array for parallel threads (`g_rng_per_thread`) has been removed, as it is now obsolete.
+    *   The separate, inline C code for the serial version of SIDM scattering has been removed in favor of the unified core function.
+
 ## [0.1.7] - 2025-10-28
 
 This major release introduces constant-β and Osipkov-Merritt anisotropy models for all density profiles, overhauls the simulation restart/extend system, and adds memory-optimized I/O with trajectory and double-precision snapshot buffers. It also includes a fix for the parallel SIDM implementation and standardizes all code and user documentation.

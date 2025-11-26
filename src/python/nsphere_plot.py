@@ -3271,7 +3271,9 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
     # 1) Radii vs. time
     for p in range(nlowest):
         r_col = 1 + 3*p  # r is the first of each triplet
-        ax_r.plot(time, data[:, r_col], label=f"P{p+1} ($\\ell_0$={initial_L_values[p]:.3f})")
+        # Format L: scientific notation for small |L|, decimal otherwise
+        L_label = f"{initial_L_values[p]:.6f}" if abs(initial_L_values[p]) >= 0.001 else f"{initial_L_values[p]:.2e}"
+        ax_r.plot(time, data[:, r_col], label=f"P{p+1} ($\\ell_0$={L_label})")
     ax_r.set_xlabel(r"$t$ (Myr)", fontsize=12)
     ax_r.set_ylabel(r"$r$ (kpc)", fontsize=12)
     ax_r.set_title(rf"Radius vs. Time ({label_descriptor} $\ell$)", fontsize=14)
@@ -3282,7 +3284,8 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
     #   second of each triplet is the energy
     for p in range(nlowest):
         e_col = 2 + 3*p
-        ax_e.plot(time, data[:, e_col], label=f"P{p+1} ($\\ell_0$={initial_L_values[p]:.3f})")
+        L_label = f"{initial_L_values[p]:.6f}" if abs(initial_L_values[p]) >= 0.001 else f"{initial_L_values[p]:.2e}"
+        ax_e.plot(time, data[:, e_col], label=f"P{p+1} ($\\ell_0$={L_label})")
     ax_e.set_xlabel(r"$t$ (Myr)", fontsize=12)
     ax_e.set_ylabel(r"$\mathcal{E}$ (km$^2$/s$^2$)", fontsize=12)
     ax_e.set_title(rf"Energy vs. Time ({label_descriptor} $\ell$)", fontsize=14)
@@ -3301,7 +3304,8 @@ def plot_lowestL_trajectories_3panel(input_file="lowest_l_trajectories.dat", out
         # average of that particle's energy over time
         single_mean = np.mean(energies[:, p])
         pct_dev = (energies[:, p] - single_mean) / single_mean * 100.0
-        ax_dev.plot(time, pct_dev, label=f"P{p+1} ($\\ell_0$={initial_L_values[p]:.3f})")
+        L_label = f"{initial_L_values[p]:.6f}" if abs(initial_L_values[p]) >= 0.001 else f"{initial_L_values[p]:.2e}"
+        ax_dev.plot(time, pct_dev, label=f"P{p+1} ($\\ell_0$={L_label})")
     ax_dev.set_xlabel(r"$t$ (Myr)", fontsize=12)
     ax_dev.set_ylabel(r"$\Delta\mathcal{E}/\langle\mathcal{E}\rangle$ (%)", fontsize=12)
     ax_dev.set_title(rf"Energy Deviation ({label_descriptor} $\ell$)", fontsize=14)
